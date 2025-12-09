@@ -115,5 +115,18 @@ class QdrantStorage:
         logger.debug("Search with score returned %d results for query='%s'", len(results), query)
         return results
 
+    async def delete_documents(self, filter: QdrantFilter) -> None:
+        """Delete documents matching the filter"""
+        try:
+            self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=filter
+            )
+            logger.info("Deleted documents from collection '%s' matching filter", self.collection_name)
+        except Exception as e:
+            logger.error("Failed to delete documents: %s", e)
+            raise
+
+
 
 

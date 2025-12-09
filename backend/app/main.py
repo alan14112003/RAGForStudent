@@ -23,15 +23,26 @@ app = FastAPI(
 from app.api.api import api_router
 app.include_router(api_router, prefix=settings.API_STR)
 
+
 # Set all CORS enabled origins
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+# Add origins from settings if available
 if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    for origin in settings.BACKEND_CORS_ORIGINS:
+        origins.append(str(origin).rstrip("/"))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 def root():

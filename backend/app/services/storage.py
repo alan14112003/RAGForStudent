@@ -131,5 +131,17 @@ class MinIOService:
             logger.error(f"Failed to delete file from MinIO: {e}")
             raise
 
+    def download_file(self, object_name: str, file_path: str | Path) -> None:
+        try:
+            self.client.fget_object(
+                bucket_name=self.bucket_name,
+                object_name=object_name,
+                file_path=str(file_path),
+            )
+            logger.info(f"Downloaded file from MinIO: {object_name} to {file_path}")
+        except S3Error as e:
+            logger.error(f"Failed to download file from MinIO: {e}")
+            raise
+
 def get_storage_service() -> MinIOService:
     return MinIOService()
