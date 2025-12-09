@@ -16,4 +16,5 @@ langchain-community
 langchain-google-genai
 llama-index
 pymysql
+pypdf
 python-dotenv

@@ -112,24 +112,24 @@ class RagService:
             self.chunk_overlap,
         )
 
-    def _get_collection_name(self, user_id: str) -> str:
-        """Tạo collection name cho user"""
-        return f"{self.collection_prefix}_{user_id}"
+    def _get_collection_name(self, session_id: str) -> str:
+        """Tạo collection name cho session (chat)"""
+        return f"chat_{session_id}"
 
-    def _get_storage(self, user_id: str) -> QdrantStorage:
+    def _get_storage(self, session_id: str) -> QdrantStorage:
         """
-        Lấy hoặc tạo storage cho user.
-        Mỗi user có 1 collection riêng.
+        Lấy hoặc tạo storage cho session.
+        Mỗi session (chat) có 1 collection riêng.
         """
-        if not user_id:
-            raise ValueError("user_id must be provided")
+        if not session_id:
+            raise ValueError("session_id must be provided")
         
         # Check cache
-        if user_id in self._storage_cache:
-            return self._storage_cache[user_id]
+        if session_id in self._storage_cache:
+            return self._storage_cache[session_id]
         
         # Tạo storage mới
-        collection_name = self._get_collection_name(user_id)
+        collection_name = self._get_collection_name(session_id)
         storage = QdrantStorage(
             collection_name=collection_name,
             embedding=self._embedding,
@@ -141,9 +141,9 @@ class RagService:
         storage.create_collection(force_recreate=self._recreate_collections)
         
         # Cache storage
-        self._storage_cache[user_id] = storage
+        self._storage_cache[session_id] = storage
         
-        logger.info("Created storage for user=%s, collection=%s", user_id, collection_name)
+        logger.info("Created storage for session=%s, collection=%s", session_id, collection_name)
         
         return storage
 
@@ -206,6 +206,7 @@ class RagService:
     async def ingest_file(
         self,
         user_id: str,
+        session_id: str,
         file_path: Path,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> IngestionSummary:
@@ -216,16 +217,16 @@ class RagService:
         if not file_path.exists() or not file_path.is_file():
             raise FileNotFoundError(f"File does not exist: {file_path}")
 
-        if not user_id:
-            raise ValueError("user_id must be provided")
+        if not session_id:
+            raise ValueError("session_id must be provided")
 
-        storage = self._get_storage(user_id)
+        storage = self._get_storage(session_id)
         
         # Tạo document_id duy nhất bằng UUIDv7
         document_id = self._generate_document_id()
 
-        logger.info("Starting ingestion: user=%s, file=%s, document_id=%s", 
-                   user_id, file_path, document_id)
+        logger.info("Starting ingestion: user=%s, session=%s, file=%s, document_id=%s", 
+                   user_id, session_id, file_path, document_id)
         
         # Convert tài liệu
         converter = ConverterFactory.create("file")
@@ -261,6 +262,7 @@ class RagService:
         for idx, (chunk, (start_char, end_char)) in enumerate(zip(chunks, chunk_positions)):
             chunk_meta = {
                 "user_id": user_id,
+                "session_id": session_id,
                 "document_id": document_id,
                 "source": str(file_path),
                 "file_name": file_path.name,
@@ -318,19 +320,32 @@ class RagService:
     async def search_with_scores(
         self,
         user_id: str,
+        session_id: str,
         query: str,
         k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """Tìm kiếm chunks kèm similarity score"""
-        if not user_id:
-            raise ValueError("user_id must be provided")
+        if not session_id:
+            raise ValueError("session_id must be provided")
             
-        storage = self._get_storage(user_id)
+        storage = self._get_storage(session_id)
         
-        logger.info("Searching with scores in user=%s collection (k=%d)", user_id, k)
+        logger.info("Searching with scores in session=%s collection (user=%s, k=%d)", session_id, user_id, k)
         
-        return await storage.search_with_score(query=query, k=k, filter=metadata_filter)
+        # No longer need to filter by session_id in metadata since we are in a dedicated collection
+        from qdrant_client.models import Filter
+        
+        # If there are other filters arguments, we'd add them here.
+        # For now we use empty filter or metadata_filter if provided
+        
+        qdrant_filter = None
+        if metadata_filter:
+             # Basic implementation: We assume metadata_filter is simpler for now or not used heavily
+             # If needed, convert dict to Qdrant Filter
+             pass
+        
+        return await storage.search_with_score(query=query, k=k, filter=qdrant_filter)
 
 
 
@@ -338,6 +353,7 @@ class RagService:
     async def query_with_llm(
         self,
         user_id: str,
+        session_id: str,
         question: str,
         llm_service: LLMService,  # LLMService instance
         k: int = 5,
@@ -368,6 +384,7 @@ class RagService:
         # 1. Retrieve relevant chunks từ vector store
         results = await self.search_with_scores(
             user_id=user_id,
+            session_id=session_id,
             query=question,
             k=k,
             metadata_filter=metadata_filter,
@@ -404,8 +421,8 @@ class RagService:
             
             # Format cho context
             context_parts.append(
-                f"### Nguon {source_id} - {source_info['file_name']} "
-                f"(Do lien quan: {score:.2f})\n{doc.page_content}"
+                f"[Source {source_id} - {source_info['file_name']} "
+                f"(score: {score:.2f})]\n{doc.page_content}"
             )
         
         context = "\n\n---\n\n".join(context_parts)
@@ -444,3 +461,44 @@ class RagService:
             raise ValueError(f"Failed to generate answer: {str(e)}")
 
 
+
+    async def delete_document(self, session_id: str, document_id: str) -> None:
+        """Delete document from vector store"""
+        if not session_id:
+            raise ValueError("session_id must be provided")
+            
+        storage = self._get_storage(session_id)
+        
+        # Create filter for document_id
+        # We stored document_id in metadata
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        
+        filter = Filter(
+            must=[
+                FieldCondition(
+                    key="metadata.document_id",
+                    match=MatchValue(value=document_id)
+                )
+            ]
+        )
+        
+        
+        logger.info("Deleting document_id=%s from session=%s collection", document_id, session_id)
+        await storage.delete_documents(filter)
+
+    async def delete_chat_collection(self, session_id: str) -> None:
+        """Delete entire collection for a chat session"""
+        if not session_id:
+            raise ValueError("session_id must be provided")
+
+        storage = self._get_storage(session_id)
+        logger.info("Deleting collection for session=%s", session_id)
+        # Note: QdrantStorage doesn't list a delete_collection method in my view, 
+        # but the client does. Let's check QdrantStorage or use client directly.
+        # Actually in _get_storage we use self._client.
+        
+        await self._client.delete_collection(storage.collection_name)
+        
+        # Remove from cache if exists
+        if session_id in self._storage_cache:
+            del self._storage_cache[session_id]

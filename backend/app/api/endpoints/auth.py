@@ -9,6 +9,12 @@ from app.services import auth
 from app.models.user import User
 from app.schemas import user as user_schema
 from app.schemas import token as token_schema
+from pydantic import BaseModel
+
+class DevLoginRequest(BaseModel):
+    email: str
+    full_name: str = "Dev User"
+
 
 router = APIRouter()
 
@@ -64,6 +70,41 @@ async def login_google(
         await db.refresh(user)
     
     # 3. Create Access Token
+    access_token = auth.create_access_token(data={"sub": str(user.id)})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+@router.post("/login/dev", response_model=token_schema.Token)
+async def login_dev(
+    login_data: DevLoginRequest,
+    db: AsyncSession = Depends(deps.get_db)
+) -> Any:
+    """
+    Dev Login for testing without Google.
+    """
+    email = login_data.email
+    full_name = login_data.full_name
+    
+    # Check if user exists
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalars().first()
+
+    if not user:
+        # Create new user
+        user = User(
+            email=email,
+            full_name=full_name,
+            avatar_url="https://ui-avatars.com/api/?name=Dev+User",
+            google_id="dev_google_id_" + email # Dummy Google ID
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    
+    # Create Access Token
     access_token = auth.create_access_token(data={"sub": str(user.id)})
     
     return {

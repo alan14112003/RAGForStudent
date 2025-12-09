@@ -3,6 +3,7 @@ from typing import List, Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
 
+
 class ChatMessageBase(BaseModel):
     role: str
     content: str
@@ -25,15 +26,22 @@ class ChatSessionBase(BaseModel):
 class ChatSessionCreate(ChatSessionBase):
     pass
 
-class ChatSession(ChatSessionBase):
+class ChatSessionUpdate(ChatSessionBase):
+    pass
+
+class ChatSessionSummary(ChatSessionBase):
     id: int
     user_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    messages: List[ChatMessage] = []
 
     class Config:
         from_attributes = True
+
+class ChatSession(ChatSessionSummary):
+    messages: List[ChatMessage] = []
+
+
 
 class ChatRequest(BaseModel):
     question: str

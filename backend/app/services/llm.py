@@ -45,13 +45,19 @@ Instructions:
 
 Question: {question}
 
-Please answer the question based on the context above. If the context doesn't contain the necessary information, state that clearly.
-Remember to answer in Vietnamese.
+Instructions:
+1. Answer the question based ONLY on the provided context.
+2. If the answer is not in the context, state that clearly.
+3. **IMPORTANT**: When you use information from a specific source, cite it immediately using the format `[Cx]`.
+   - The context provides sources labeled like `[Source Sx - filename]`.
+   - You MUST use the exact ID format `[Sx]` in your answer.
+   - Example: "The sky is blue [S1], [S3], and grass is green [S2]."
+4. Answer in Vietnamese.
 """
 
     def __init__(
         self,
-        model: str = "gemini-2.0-flash-exp",
+        model: str = "gemini-2.5-flash",
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         temperature: float = 0.1,
@@ -162,7 +168,7 @@ Remember to answer in Vietnamese.
                 score = source.get("score", 0.0)
                 
                 context_parts.append(
-                    f"[Nguồn {idx} - {file_name} (độ liên quan: {score:.2f})]\n{content}"
+                    f"[Source S{idx} - {file_name} (score: {score:.2f})]\n{content}"
                 )
             
             context = "\n\n---\n\n".join(context_parts)
