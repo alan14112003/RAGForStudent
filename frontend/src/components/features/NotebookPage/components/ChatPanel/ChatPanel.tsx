@@ -1,24 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import ChatInput from './chat-input';
-import MessageList, { Message } from './message-list';
-import FileUpload from '@/components/common/file-upload';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Paperclip, FileText } from 'lucide-react';
+import ChatInput from './components/ChatInput';
+import MessageList from './components/MessageList';
+import { Message } from '@/types';
 import { toast } from 'react-toastify';
 import { chatService } from '@/services/chatService';
 import { useAppSelector } from '@/store';
 
-interface ChatInterfaceProps {
+interface ChatPanelProps {
     sessionId: string;
     initialMessages: any[];
     onCitationClick?: (citation: any) => void;
 }
 
-export default function ChatInterface({ sessionId, initialMessages, onCitationClick }: ChatInterfaceProps) {
-    // Convert backend messages to UI messages
+export default function ChatPanel({ sessionId, initialMessages, onCitationClick }: ChatPanelProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const user = useAppSelector((state) => state.auth.user);
@@ -33,7 +29,7 @@ export default function ChatInterface({ sessionId, initialMessages, onCitationCl
                 citations: m.sources?.map((s: any) => ({
                     id: s.id || Math.random().toString(),
                     sourceName: s.file_name || 'Source',
-                    sourceId: s.source_id, // backend provides source_id like "S1"
+                    sourceId: s.source_id,
                     documentId: s.document_id,
                     page: s.page_number,
                     highlightRange: (s.start_char !== undefined && s.end_char !== undefined) ? { start: s.start_char, end: s.end_char } : undefined
@@ -44,7 +40,6 @@ export default function ChatInterface({ sessionId, initialMessages, onCitationCl
     }, [initialMessages]);
 
     const handleSend = async (text: string) => {
-        // Optimistic UI Update
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, createdAt: new Date() };
         setMessages(prev => [...prev, userMsg]);
         setIsLoading(true);
@@ -52,8 +47,6 @@ export default function ChatInterface({ sessionId, initialMessages, onCitationCl
         try {
             const response = await chatService.sendMessage(sessionId, text);
 
-            // Response is the AI message from backend
-            // Assume backend sends source_id (S1) and start_char/end_char now
             const aiMsg: Message = {
                 id: response.id.toString(),
                 role: 'assistant',
@@ -91,5 +84,3 @@ export default function ChatInterface({ sessionId, initialMessages, onCitationCl
         </div>
     );
 }
-
-

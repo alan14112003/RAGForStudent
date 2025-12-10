@@ -3,14 +3,10 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Citation, Message, UserInfo } from '@/types';
-import MessageItem from './MessageItem';
-import { ArrowDown } from 'lucide-react';
-
-// Re-export for backward compatibility
-export type { Citation, UserInfo, Message };
+import MessageItem from './components/MessageItem';
+import ScrollToBottom from '../ScrollToBottom';
 
 interface MessageListProps {
     messages: Message[];
@@ -28,7 +24,6 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
     const prevMessageLengthRef = useRef<number>(0);
     const hasInitialScrollRef = useRef<boolean>(false);
 
-    // Get viewport element on mount
     useEffect(() => {
         const findViewport = () => {
             if (containerRef.current) {
@@ -41,15 +36,12 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
             return false;
         };
 
-        // Try immediately
         if (!findViewport()) {
-            // Retry after a short delay if not found
             const timer = setTimeout(findViewport, 100);
             return () => clearTimeout(timer);
         }
     }, []);
 
-    // Scroll to bottom function
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (viewportEl) {
             viewportEl.scrollTo({
@@ -61,7 +53,6 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
         }
     }, [viewportEl]);
 
-    // Check if user is near bottom (within 100px)
     const checkScrollPosition = useCallback(() => {
         if (viewportEl) {
             const { scrollTop, scrollHeight, clientHeight } = viewportEl;
@@ -70,24 +61,18 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
         }
     }, [viewportEl]);
 
-    // Auto-scroll to bottom when messages change or on initial load
     useEffect(() => {
         if (!viewportEl) return;
 
         const currentLength = messages.length;
         const prevLength = prevMessageLengthRef.current;
 
-        // Scroll to bottom if:
-        // 1. Initial load (messages went from 0 to something)
-        // 2. New messages arrived
-        // 3. First time we have both viewport and messages
         const shouldScroll =
-            (prevLength === 0 && currentLength > 0) || // Initial load
-            (currentLength > prevLength) || // New message
-            (!hasInitialScrollRef.current && currentLength > 0); // First scroll after viewport ready
+            (prevLength === 0 && currentLength > 0) ||
+            (currentLength > prevLength) ||
+            (!hasInitialScrollRef.current && currentLength > 0);
 
         if (shouldScroll) {
-            // Use requestAnimationFrame + setTimeout for more reliable scroll timing
             requestAnimationFrame(() => {
                 setTimeout(() => {
                     if (viewportEl) {
@@ -104,12 +89,11 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
         prevMessageLengthRef.current = currentLength;
     }, [messages.length, viewportEl]);
 
-    // Setup scroll event listener
     useEffect(() => {
         if (viewportEl) {
             const handleScroll = () => checkScrollPosition();
             viewportEl.addEventListener('scroll', handleScroll, { passive: true });
-            checkScrollPosition(); // Initial check
+            checkScrollPosition();
             return () => viewportEl.removeEventListener('scroll', handleScroll);
         }
     }, [viewportEl, checkScrollPosition]);
@@ -135,34 +119,13 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
                             </div>
                         </div>
                     )}
-                    {/* Invisible element to scroll to */}
                     <div ref={bottomRef} />
                 </div>
             </ScrollArea>
 
-            {/* Scroll to bottom button */}
             {showScrollButton && (
-                <Button
-                    onClick={() => scrollToBottom('smooth')}
-                    className={cn(
-                        "absolute left-1/2 -translate-x-1/2 bottom-6 z-50",
-                        "h-10 w-10 rounded-full",
-                        "bg-gradient-to-r from-indigo-500 to-purple-600",
-                        "hover:from-indigo-600 hover:to-purple-700",
-                        "shadow-lg shadow-indigo-500/30",
-                        "transition-all duration-300 ease-out",
-                        "hover:scale-110 hover:shadow-xl hover:shadow-indigo-500/40",
-                        "animate-in fade-in slide-in-from-bottom-4 duration-300",
-                        "flex items-center justify-center",
-                        "border border-white/20"
-                    )}
-                    size="icon"
-                    aria-label="Scroll to bottom"
-                >
-                    <ArrowDown className="h-5 w-5 text-white" />
-                </Button>
+                <ScrollToBottom onClick={() => scrollToBottom('smooth')} />
             )}
         </div>
     );
 }
-

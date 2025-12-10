@@ -12,6 +12,15 @@ export interface Notebook {
 
 export interface ChatSessionDetail extends Notebook {
   messages: Message[];
-  documents?: any[];
+  documents?: DocumentSource[];
 }
 
+// Document source type for notebook documents
+export interface DocumentSource {
+  id: number;
+  filename?: string;
+  name?: string;
+  created_at?: string;
+  content?: string;
+  type?: string;
+}

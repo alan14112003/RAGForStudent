@@ -1,11 +1,11 @@
 'use client';
+
 import { useRef, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, FileText, Calendar } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { X, FileText, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
 
 interface SourceDetailProps {
     source: {
@@ -23,7 +23,6 @@ interface SourceDetailProps {
         end: number;
     };
 }
-
 
 export default function SourceDetail({ source, onClose, highlightRange }: SourceDetailProps) {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -47,17 +46,8 @@ export default function SourceDetail({ source, onClose, highlightRange }: Source
         );
     }
 
-    // Helper to render content with highlight
     const renderContent = () => {
         if (!source.content) return <p className="italic text-muted-foreground">No content available for this source.</p>;
-
-        const markdownComponents = {
-            // Flatten paragraphs to spans inside highlights to avoid invalid HTML (block inside inline)
-            // or just generally to keep flow if needed. But for "before" and "after" blocks, standard p is fine.
-            // For the highlighted part, we definitely want it to be inline if possible, or at least not break the mark tag.
-            // However, mark is inline. <p> inside <mark> is invalid.
-            // So for the highlighted chunk, we force p -> span.
-        };
 
         if (!highlightRange) {
             return (
@@ -95,7 +85,6 @@ export default function SourceDetail({ source, onClose, highlightRange }: Source
                         remarkPlugins={[remarkGfm]}
                         components={{
                             p: ({ node, ...props }) => <span {...props} />,
-                            // Ensure other block elements don't break the layout too much inside a mark
                         }}
                     >
                         {highlighted}
@@ -139,4 +128,3 @@ export default function SourceDetail({ source, onClose, highlightRange }: Source
         </div>
     );
 }
-
