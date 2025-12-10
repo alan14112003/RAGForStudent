@@ -1,12 +1,13 @@
 'use client';
 
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getInitials } from '@/lib/helpers';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Citation, Message, UserInfo } from '@/types';
+import MessageItem from './MessageItem';
+import { ArrowDown } from 'lucide-react';
 
 // Re-export for backward compatibility
 export type { Citation, UserInfo, Message };
@@ -20,131 +21,148 @@ interface MessageListProps {
 }
 
 export default function MessageList({ messages, isLoading, onCitationClick, className, userInfo }: MessageListProps) {
-    // Function to render content with clickable citations using Markdown
-    const renderMessageContent = (msg: Message) => {
-        if (msg.role === 'user') return <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const [viewportEl, setViewportEl] = useState<HTMLElement | null>(null);
+    const prevMessageLengthRef = useRef<number>(0);
+    const hasInitialScrollRef = useRef<boolean>(false);
 
-        // Pre-process content: convert [S1], [S2] into inline code `citation:S1`
-        // This avoids link behavior issues and uses custom code component to render
-        const processedContent = msg.content
-            .replace(/\[(S\d+(?:,\s*S\d+)*)\]/g, '`citation:$1`');
+    // Get viewport element on mount
+    useEffect(() => {
+        const findViewport = () => {
+            if (containerRef.current) {
+                const viewport = containerRef.current.querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement;
+                if (viewport) {
+                    setViewportEl(viewport);
+                    return true;
+                }
+            }
+            return false;
+        };
 
-        return (
-            <div className="leading-relaxed markdown-content">
-                <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                        // Custom code component to handle citations
-                        code: ({ node, className, children, ...props }) => {
-                            const content = String(children).replace(/\n$/, '');
+        // Try immediately
+        if (!findViewport()) {
+            // Retry after a short delay if not found
+            const timer = setTimeout(findViewport, 100);
+            return () => clearTimeout(timer);
+        }
+    }, []);
 
-                            // Check if this is a citation code
-                            if (content.startsWith('citation:')) {
-                                const sourceIds = content.replace('citation:', '').split(',').map(s => s.trim());
-                                return (
-                                    <>
-                                        {sourceIds.map((sourceId, idx) => {
-                                            const citation = msg.citations?.find(c => c.sourceId === sourceId);
-                                            return (
-                                                <button
-                                                    type="button"
-                                                    key={`${sourceId}-${idx}`}
-                                                    className="inline-flex items-center px-1.5 py-0 text-[10px] cursor-pointer bg-secondary text-secondary-foreground hover:bg-primary/20 transition-colors mx-0.5 rounded-full border-0"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        if (citation) onCitationClick?.(citation);
-                                                    }}
-                                                    title={citation ? citation.sourceName : "Source"}
-                                                >
-                                                    {sourceId}
-                                                </button>
-                                            );
-                                        })}
-                                    </>
-                                );
-                            }
+    // Scroll to bottom function
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        if (viewportEl) {
+            viewportEl.scrollTo({
+                top: viewportEl.scrollHeight,
+                behavior: behavior
+            });
+        } else if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior });
+        }
+    }, [viewportEl]);
 
-                            // Regular code rendering
-                            const isInline = !className;
-                            return isInline
-                                ? <code className="bg-muted px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
-                                : <code className={cn("block bg-muted p-2 rounded text-sm overflow-x-auto", className)} {...props}>{children}</code>;
-                        },
-                        // Ensure lists render correctly with proper styling
-                        ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
-                        ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
-                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                        // Default link rendering
-                        a: ({ node, href, children, ...props }) => (
-                            <a href={href} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
-                        ),
-                    }}
-                >
-                    {processedContent}
-                </ReactMarkdown>
-            </div>
-        );
-    };
+    // Check if user is near bottom (within 100px)
+    const checkScrollPosition = useCallback(() => {
+        if (viewportEl) {
+            const { scrollTop, scrollHeight, clientHeight } = viewportEl;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            setShowScrollButton(distanceFromBottom > 100);
+        }
+    }, [viewportEl]);
+
+    // Auto-scroll to bottom when messages change or on initial load
+    useEffect(() => {
+        if (!viewportEl) return;
+
+        const currentLength = messages.length;
+        const prevLength = prevMessageLengthRef.current;
+
+        // Scroll to bottom if:
+        // 1. Initial load (messages went from 0 to something)
+        // 2. New messages arrived
+        // 3. First time we have both viewport and messages
+        const shouldScroll =
+            (prevLength === 0 && currentLength > 0) || // Initial load
+            (currentLength > prevLength) || // New message
+            (!hasInitialScrollRef.current && currentLength > 0); // First scroll after viewport ready
+
+        if (shouldScroll) {
+            // Use requestAnimationFrame + setTimeout for more reliable scroll timing
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (viewportEl) {
+                        viewportEl.scrollTo({
+                            top: viewportEl.scrollHeight,
+                            behavior: 'instant' as ScrollBehavior
+                        });
+                        hasInitialScrollRef.current = true;
+                    }
+                }, 50);
+            });
+        }
+
+        prevMessageLengthRef.current = currentLength;
+    }, [messages.length, viewportEl]);
+
+    // Setup scroll event listener
+    useEffect(() => {
+        if (viewportEl) {
+            const handleScroll = () => checkScrollPosition();
+            viewportEl.addEventListener('scroll', handleScroll, { passive: true });
+            checkScrollPosition(); // Initial check
+            return () => viewportEl.removeEventListener('scroll', handleScroll);
+        }
+    }, [viewportEl, checkScrollPosition]);
 
     return (
-        <ScrollArea className={cn("flex-1 p-4", className)}>
-            <div className="space-y-4 max-w-3xl mx-auto">
-                {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={cn(
-                            'flex gap-3',
-                            msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                        )}
-                    >
-                        <Avatar className="h-8 w-8">
-                            {msg.role === 'user' && userInfo?.picture && <AvatarImage src={userInfo.picture} alt={userInfo.name || 'User'} />}
-                            {msg.role === 'assistant' && <AvatarImage src="/bot-avatar.png" />}
-                            <AvatarFallback>{msg.role === 'user' ? getInitials(userInfo?.name) : 'AI'}</AvatarFallback>
-                        </Avatar>
+        <div ref={containerRef} className="relative flex-1 flex flex-col overflow-hidden">
+            <ScrollArea className={cn("flex-1 p-4", className)}>
+                <div className="space-y-4 max-w-3xl mx-auto">
+                    {messages.map((msg) => (
+                        <MessageItem
+                            key={msg.id}
+                            message={msg}
+                            onCitationClick={onCitationClick}
+                            userInfo={userInfo}
+                        />
+                    ))}
 
-                        <div
-                            className={cn(
-                                'rounded-lg p-3 max-w-[80%] text-sm',
-                                msg.role === 'user'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white border dark:bg-gray-800'
-                            )}
-                        >
-                            {renderMessageContent(msg)}
-
-                            {/* Fallback sources list if needed, or remove if inline is enough */}
-                            {msg.role === 'assistant' && msg.citations && msg.citations.length > 0 && (
-                                <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <span className="text-xs font-semibold opacity-70">References:</span>
-                                    {msg.citations.map((cite) => (
-                                        <div
-                                            key={cite.id}
-                                            className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer hover:underline"
-                                            onClick={() => onCitationClick?.(cite)}
-                                        >
-                                            <span className="font-mono bg-muted px-1 rounded text-[10px]">{cite.sourceId}</span>
-                                            <span className="truncate max-w-[150px]">{cite.sourceName}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                    {isLoading && (
+                        <div className="flex gap-3">
+                            <Avatar className="h-8 w-8"><AvatarFallback>AI</AvatarFallback></Avatar>
+                            <div className="bg-white border dark:bg-gray-800 rounded-lg p-3">
+                                <span className="animate-pulse">Thinking...</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )}
+                    {/* Invisible element to scroll to */}
+                    <div ref={bottomRef} />
+                </div>
+            </ScrollArea>
 
-                {isLoading && (
-                    <div className="flex gap-3">
-                        <Avatar className="h-8 w-8"><AvatarFallback>AI</AvatarFallback></Avatar>
-                        <div className="bg-white border dark:bg-gray-800 rounded-lg p-3">
-                            <span className="animate-pulse">Thinking...</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </ScrollArea>
+            {/* Scroll to bottom button */}
+            {showScrollButton && (
+                <Button
+                    onClick={() => scrollToBottom('smooth')}
+                    className={cn(
+                        "absolute left-1/2 -translate-x-1/2 bottom-6 z-50",
+                        "h-10 w-10 rounded-full",
+                        "bg-gradient-to-r from-indigo-500 to-purple-600",
+                        "hover:from-indigo-600 hover:to-purple-700",
+                        "shadow-lg shadow-indigo-500/30",
+                        "transition-all duration-300 ease-out",
+                        "hover:scale-110 hover:shadow-xl hover:shadow-indigo-500/40",
+                        "animate-in fade-in slide-in-from-bottom-4 duration-300",
+                        "flex items-center justify-center",
+                        "border border-white/20"
+                    )}
+                    size="icon"
+                    aria-label="Scroll to bottom"
+                >
+                    <ArrowDown className="h-5 w-5 text-white" />
+                </Button>
+            )}
+        </div>
     );
 }
 
