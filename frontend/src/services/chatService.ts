@@ -1,26 +1,5 @@
 import api from './api';
-
-export interface Notebook {
-  id: number;
-  title: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  source_count: number;
-}
-
-export interface Message {
-  id: number;
-  role: 'user' | 'ai';
-  content: string;
-  sources?: any[];
-  created_at: string;
-}
-
-export interface ChatSessionDetail extends Notebook {
-  messages: Message[];
-  documents?: any[];
-}
+import { Notebook, ChatSessionDetail } from '@/types';
 
 export const chatService = {
   async getNotebooks(): Promise<Notebook[]> {

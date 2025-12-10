@@ -18,7 +18,7 @@ class DevLoginRequest(BaseModel):
 
 router = APIRouter()
 
-@router.post("/login/google", response_model=token_schema.Token)
+@router.post("/login/google", response_model=token_schema.LoginResponse)
 async def login_google(
     token: str = Body(..., embed=True),
     db: AsyncSession = Depends(deps.get_db)
@@ -75,9 +75,15 @@ async def login_google(
     return {
         "access_token": access_token,
         "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "avatar_url": user.avatar_url,
+        }
     }
 
-@router.post("/login/dev", response_model=token_schema.Token)
+@router.post("/login/dev", response_model=token_schema.LoginResponse)
 async def login_dev(
     login_data: DevLoginRequest,
     db: AsyncSession = Depends(deps.get_db)
@@ -110,4 +116,10 @@ async def login_dev(
     return {
         "access_token": access_token,
         "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "avatar_url": user.avatar_url,
+        }
     }

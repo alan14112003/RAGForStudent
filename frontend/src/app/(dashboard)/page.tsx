@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/features/header';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { chatService, Notebook } from '@/services/chatService';
+import { chatService } from '@/services/chatService';
+import { Notebook } from '@/types';
 import { toast } from 'react-toastify';
+import { useAppSelector } from '@/store';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Edit2, Trash2 } from 'lucide-react';
 import {
@@ -22,6 +24,7 @@ import {
 
 export default function DashboardPage() {
     const router = useRouter();
+    const user = useAppSelector((state) => state.auth.user);
     const [notebooks, setNotebooks] = useState<Notebook[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -100,7 +103,7 @@ export default function DashboardPage() {
 
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                 <div className="mb-8 flex items-center justify-between">
-                    <h2 className="text-2xl font-light text-foreground">Welcome back, User</h2>
+                    <h2 className="text-2xl font-light text-foreground">Welcome back, {user?.name || 'User'}</h2>
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Sort by: </span>
                         <Button variant="ghost" size="sm" className="font-medium text-foreground">Last opened</Button>
@@ -180,7 +183,7 @@ export default function DashboardPage() {
                                             {nb.source_count} {nb.source_count === 1 ? 'source' : 'sources'}
                                         </CardDescription>
                                         <span className="text-[10px] text-muted-foreground">
-                                            {new Date(nb.updated_at).toLocaleDateString()}
+                                            {new Date(nb.updated_at ? nb.updated_at : nb.created_at).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </CardContent>
