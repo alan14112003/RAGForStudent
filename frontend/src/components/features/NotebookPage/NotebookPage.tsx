@@ -51,16 +51,6 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         enabled: !!sessionId,
     });
 
-    // Upload document mutation
-    const uploadMutation = useMutation({
-        mutationFn: (file: File) => chatService.uploadFile(sessionId, file),
-    });
-
-    // Delete document mutation
-    const deleteMutation = useMutation({
-        mutationFn: (documentId: number) => chatService.deleteDocument(sessionId, documentId),
-    });
-
     // Rename session mutation
     const renameMutation = useMutation({
         mutationFn: (title: string) => chatService.renameNotebook(parseInt(sessionId), title),
@@ -93,35 +83,6 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         dispatch(setHighlightRange(undefined));
     };
 
-    const handleDeleteSource = async (docId: number) => {
-        if (!confirm('Are you sure you want to delete this source? This action cannot be undone.')) return;
-
-        try {
-            await deleteMutation.mutateAsync(docId);
-            // Update cache
-            queryClient.setQueryData(queryKeys.notebooks.documents(sessionId), (old: any[] = []) => {
-                return old.filter((d: any) => d.id !== docId);
-            });
-            if (selectedSourceId === docId) {
-                dispatch(selectSource(null));
-            }
-            toast.success('Source deleted successfully');
-        } catch (error: any) {
-            toast.error(error.response?.data?.detail || 'Failed to delete source');
-        }
-    };
-
-    const handleFileUpload = async (file: File) => {
-        try {
-            await uploadMutation.mutateAsync(file);
-            // Refetch documents after upload
-            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.documents(sessionId) });
-            toast.success('File uploaded and processing...');
-        } catch (error: any) {
-            toast.error(error.response?.data?.detail || 'Upload failed');
-        }
-    };
-
     const handleTitleChange = async (newTitle: string) => {
         try {
             await renameMutation.mutateAsync(newTitle);
@@ -149,9 +110,7 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         }
     };
 
-
     const loading = sessionLoading || documentsLoading;
-    const uploading = uploadMutation.isPending;
 
     if (loading) {
         return (
@@ -181,9 +140,6 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
                                 documents={documents}
                                 selectedSourceId={selectedSourceId}
                                 onSelectSource={handleSelectSource}
-                                onDeleteSource={handleDeleteSource}
-                                onUpload={handleFileUpload}
-                                uploading={uploading}
                             />
                         )}
                         {mobileTab === 'chat' && (
@@ -211,9 +167,6 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
                             documents={documents}
                             selectedSourceId={selectedSourceId}
                             onSelectSource={handleSelectSource}
-                            onDeleteSource={handleDeleteSource}
-                            onUpload={handleFileUpload}
-                            uploading={uploading}
                         />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
