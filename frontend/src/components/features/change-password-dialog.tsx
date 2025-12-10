@@ -48,27 +48,27 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
     };
 
     const getStrengthText = () => {
-        if (passwordStrength <= 2) return 'Yếu';
-        if (passwordStrength <= 3) return 'Trung bình';
-        if (passwordStrength <= 4) return 'Khá';
-        return 'Mạnh';
+        if (passwordStrength <= 2) return 'Weak';
+        if (passwordStrength <= 3) return 'Fair';
+        if (passwordStrength <= 4) return 'Good';
+        return 'Strong';
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!newPassword || !confirmPassword) {
-            toast.error('Vui lòng điền đầy đủ thông tin');
+            toast.error('Please fill in all fields');
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            toast.error('Mật khẩu mới không khớp');
+            toast.error('New passwords do not match');
             return;
         }
 
         if (passwordStrength < 3) {
-            toast.error('Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.');
+            toast.error('Password is too weak. Please choose a stronger password.');
             return;
         }
 
@@ -81,10 +81,10 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            toast.success('Đổi mật khẩu thành công!');
+            toast.success('Password changed successfully!');
             handleClose();
         } catch (error) {
-            toast.error('Không thể đổi mật khẩu. Vui lòng thử lại.');
+            toast.error('Unable to change password. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -116,9 +116,9 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                             <Lock className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <DialogTitle>Đổi mật khẩu</DialogTitle>
+                            <DialogTitle>Change Password</DialogTitle>
                             <DialogDescription>
-                                Tạo mật khẩu mới cho tài khoản của bạn
+                                Create a new password for your account
                             </DialogDescription>
                         </div>
                     </div>
@@ -128,14 +128,14 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                     {/* Current Password */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                            Mật khẩu hiện tại <span className="text-muted-foreground">(tùy chọn)</span>
+                            Current Password <span className="text-muted-foreground">(optional)</span>
                         </label>
                         <div className="relative">
                             <Input
                                 type={showCurrentPassword ? 'text' : 'password'}
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                placeholder="Nhập mật khẩu hiện tại"
+                                placeholder="Enter current password"
                                 className="pr-10"
                             />
                             <button
@@ -147,21 +147,21 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                             </button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Bỏ qua nếu bạn chưa thiết lập mật khẩu
+                            Skip if you haven't set a password yet
                         </p>
                     </div>
 
                     {/* New Password */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                            Mật khẩu mới <span className="text-red-500">*</span>
+                            New Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <Input
                                 type={showNewPassword ? 'text' : 'password'}
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="Nhập mật khẩu mới"
+                                placeholder="Enter new password"
                                 className="pr-10"
                                 required
                             />
@@ -178,10 +178,10 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                         {newPassword.length > 0 && (
                             <div className="space-y-2 p-3 rounded-lg bg-muted/30">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground">Độ mạnh mật khẩu:</span>
+                                    <span className="text-xs text-muted-foreground">Password strength:</span>
                                     <span className={`text-xs font-medium ${passwordStrength <= 2 ? 'text-red-500' :
-                                            passwordStrength <= 3 ? 'text-orange-500' :
-                                                passwordStrength <= 4 ? 'text-yellow-600' : 'text-green-500'
+                                        passwordStrength <= 3 ? 'text-orange-500' :
+                                            passwordStrength <= 4 ? 'text-yellow-600' : 'text-green-500'
                                         }`}>
                                         {getStrengthText()}
                                     </span>
@@ -193,11 +193,11 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-1 mt-2">
-                                    <CheckItem passed={passwordChecks.minLength} text="Ít nhất 8 ký tự" />
-                                    <CheckItem passed={passwordChecks.hasUppercase} text="Chữ hoa (A-Z)" />
-                                    <CheckItem passed={passwordChecks.hasLowercase} text="Chữ thường (a-z)" />
-                                    <CheckItem passed={passwordChecks.hasNumber} text="Số (0-9)" />
-                                    <CheckItem passed={passwordChecks.hasSpecial} text="Ký tự đặc biệt" />
+                                    <CheckItem passed={passwordChecks.minLength} text="At least 8 characters" />
+                                    <CheckItem passed={passwordChecks.hasUppercase} text="Uppercase (A-Z)" />
+                                    <CheckItem passed={passwordChecks.hasLowercase} text="Lowercase (a-z)" />
+                                    <CheckItem passed={passwordChecks.hasNumber} text="Number (0-9)" />
+                                    <CheckItem passed={passwordChecks.hasSpecial} text="Special character" />
                                 </div>
                             </div>
                         )}
@@ -206,19 +206,19 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                     {/* Confirm Password */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                            Xác nhận mật khẩu mới <span className="text-red-500">*</span>
+                            Confirm New Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <Input
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="Nhập lại mật khẩu mới"
+                                placeholder="Re-enter new password"
                                 className={`pr-10 ${confirmPassword.length > 0
-                                        ? passwordsMatch
-                                            ? 'border-green-500 focus-visible:ring-green-500'
-                                            : 'border-red-500 focus-visible:ring-red-500'
-                                        : ''
+                                    ? passwordsMatch
+                                        ? 'border-green-500 focus-visible:ring-green-500'
+                                        : 'border-red-500 focus-visible:ring-red-500'
+                                    : ''
                                     }`}
                                 required
                             />
@@ -233,20 +233,20 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                         {confirmPassword.length > 0 && !passwordsMatch && (
                             <p className="text-xs text-red-500 flex items-center gap-1">
                                 <X size={12} />
-                                Mật khẩu không khớp
+                                Passwords do not match
                             </p>
                         )}
                         {passwordsMatch && (
                             <p className="text-xs text-green-500 flex items-center gap-1">
                                 <Check size={12} />
-                                Mật khẩu khớp
+                                Passwords match
                             </p>
                         )}
                     </div>
 
                     <DialogFooter className="gap-2 sm:gap-0">
                         <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button
                             type="submit"
@@ -256,12 +256,12 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                             {isLoading ? (
                                 <>
                                     <Loader2 size={16} className="animate-spin" />
-                                    Đang xử lý...
+                                    Processing...
                                 </>
                             ) : (
                                 <>
                                     <Lock size={16} />
-                                    Đổi mật khẩu
+                                    Change Password
                                 </>
                             )}
                         </Button>
