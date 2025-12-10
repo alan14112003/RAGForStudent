@@ -1,5 +1,6 @@
 
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 class Token(BaseModel):
@@ -15,6 +16,7 @@ class UserInfo(BaseModel):
     email: str
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

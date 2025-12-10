@@ -11,7 +11,8 @@ export const authService = {
         id: String(user.id),
         name: user.full_name || 'User',
         email: user.email,
-        picture: user.avatar_url || undefined
+        picture: user.avatar_url || undefined,
+        createdAt: user.created_at || undefined
       },
       token: access_token,
     };
@@ -26,7 +27,8 @@ export const authService = {
         id: String(user.id),
         name: user.full_name || 'Dev Student',
         email: user.email,
-        picture: user.avatar_url || undefined
+        picture: user.avatar_url || undefined,
+        createdAt: user.created_at || undefined
       },
       token: access_token,
     };

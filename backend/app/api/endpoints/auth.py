@@ -80,6 +80,7 @@ async def login_google(
             "email": user.email,
             "full_name": user.full_name,
             "avatar_url": user.avatar_url,
+            "created_at": user.created_at,
         }
     }
 
@@ -121,5 +122,6 @@ async def login_dev(
             "email": user.email,
             "full_name": user.full_name,
             "avatar_url": user.avatar_url,
+            "created_at": user.created_at,
         }
     }
