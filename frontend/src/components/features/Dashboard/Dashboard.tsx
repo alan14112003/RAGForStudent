@@ -1,34 +1,46 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Search, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { fetchNotebooks, createNotebook } from '@/store/features/notebooksSlice';
+import { useAppSelector } from '@/store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { chatService } from '@/services/chatService';
+import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'react-toastify';
 import Header from '@/components/features/Header/Header';
 import NotebookItem from './components/NotebookItem';
 import CreateNotebookCard from './components/CreateNotebookCard';
+import { Notebook } from '@/types';
 
 export default function Dashboard() {
     const router = useRouter();
-    const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const user = useAppSelector((state) => state.auth.user);
-    const { notebooks, loading } = useAppSelector((state) => state.notebooks);
 
-    useEffect(() => {
-        dispatch(fetchNotebooks());
-    }, [dispatch]);
+    // Fetch notebooks using React Query
+    const { data: notebooks = [], isLoading } = useQuery({
+        queryKey: queryKeys.notebooks.list(),
+        queryFn: () => chatService.getNotebooks(),
+    });
+
+    // Create notebook mutation
+    const createNotebookMutation = useMutation({
+        mutationFn: (title: string) => chatService.createNotebook(title),
+    });
 
     const handleCreateNotebook = async () => {
         try {
-            const result = await dispatch(createNotebook('New Notebook')).unwrap();
-            router.push(`/notebook/${result.id}`);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to create notebook');
+            const newNotebook = await createNotebookMutation.mutateAsync('New Notebook');
+            // Optimistically update cache
+            queryClient.setQueryData<Notebook[]>(queryKeys.notebooks.list(), (old = []) => {
+                return [newNotebook, ...old];
+            });
+            toast.success('Notebook created successfully!');
+            router.push(`/notebook/${newNotebook.id}`);
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Failed to create notebook');
         }
     };
 
@@ -50,7 +62,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {loading ? (
+                {isLoading ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>

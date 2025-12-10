@@ -14,8 +14,9 @@ import {
 } from '@/components/ui/dialog';
 import { Book } from 'lucide-react';
 import { Notebook } from '@/types';
-import { useAppDispatch } from '@/store';
-import { renameNotebook, deleteNotebook } from '@/store/features/notebooksSlice';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { chatService } from '@/services/chatService';
+import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'react-toastify';
 import NotebookMenu from './components/NotebookMenu';
 
@@ -25,9 +26,20 @@ interface NotebookItemProps {
 }
 
 export default function NotebookItem({ notebook, onClick }: NotebookItemProps) {
-    const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
     const [newTitle, setNewTitle] = useState(notebook.title);
+
+    // Rename notebook mutation
+    const renameMutation = useMutation({
+        mutationFn: ({ id, title }: { id: number; title: string }) =>
+            chatService.renameNotebook(id, title),
+    });
+
+    // Delete notebook mutation
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => chatService.deleteNotebook(id),
+    });
 
     const handleRenameClick = () => {
         setNewTitle(notebook.title);
@@ -36,24 +48,32 @@ export default function NotebookItem({ notebook, onClick }: NotebookItemProps) {
 
     const handleRenameConfirm = async () => {
         try {
-            await dispatch(renameNotebook({ id: notebook.id, title: newTitle })).unwrap();
+            await renameMutation.mutateAsync({ id: notebook.id, title: newTitle });
+            // Update cache
+            queryClient.setQueryData<Notebook[]>(queryKeys.notebooks.list(), (old = []) => {
+                return old.map(nb =>
+                    nb.id === notebook.id ? { ...nb, title: newTitle } : nb
+                );
+            });
             toast.success('Notebook renamed');
             setIsRenameDialogOpen(false);
-        } catch (error) {
-            console.error('Failed to rename notebook', error);
-            toast.error('Failed to rename notebook');
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Failed to rename notebook');
         }
     };
 
     const handleDeleteClick = async () => {
-        if (confirm('Are you sure you want to delete this notebook? This action cannot be undone.')) {
-            try {
-                await dispatch(deleteNotebook(notebook.id)).unwrap();
-                toast.success('Notebook deleted');
-            } catch (error) {
-                console.error('Failed to delete notebook', error);
-                toast.error('Failed to delete notebook');
-            }
+        if (!confirm('Are you sure you want to delete this notebook? This action cannot be undone.')) return;
+
+        try {
+            await deleteMutation.mutateAsync(notebook.id);
+            // Update cache
+            queryClient.setQueryData<Notebook[]>(queryKeys.notebooks.list(), (old = []) => {
+                return old.filter(nb => nb.id !== notebook.id);
+            });
+            toast.success('Notebook deleted');
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Failed to delete notebook');
         }
     };
 

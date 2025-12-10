@@ -1,14 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import authReducer from './features/authSlice';
-import notebooksReducer from './features/notebooksSlice';
-import notebookSessionReducer from './features/notebookSessionSlice';
+import uiReducer from './features/uiSlice';
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
-        notebooks: notebooksReducer,
-        notebookSession: notebookSessionReducer,
+        ui: uiReducer,
     },
     devTools: process.env.NODE_ENV !== 'production',
 });

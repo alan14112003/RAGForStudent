@@ -10,16 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
-import {
-    fetchSession,
-    fetchDocuments,
-    uploadDocument,
-    deleteDocument,
-    renameSession,
-    selectSource,
-    setHighlightRange,
-    clearSession,
-} from '@/store/features/notebookSessionSlice';
+import { selectSource, setHighlightRange, clearUI } from '@/store/features/uiSlice';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { chatService } from '@/services/chatService';
+import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'react-toastify';
 import { useIsMobile } from '@/hooks';
 import { MobileTab } from '@/types';
@@ -36,38 +30,56 @@ interface NotebookPageProps {
 export default function NotebookPage({ sessionId }: NotebookPageProps) {
     const router = useRouter();
     const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const isMobile = useIsMobile();
 
-    const {
-        session,
-        documents,
-        selectedSourceId,
-        highlightRange,
-        loading,
-        uploading,
-    } = useAppSelector((state) => state.notebookSession);
+    const { selectedSourceId, highlightRange } = useAppSelector((state) => state.ui);
 
     const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
 
-    useEffect(() => {
-        if (sessionId) {
-            dispatch(fetchSession(sessionId));
-            dispatch(fetchDocuments(sessionId));
-        }
+    // Fetch session data
+    const { data: session, isLoading: sessionLoading, error: sessionError } = useQuery({
+        queryKey: queryKeys.notebooks.detail(sessionId),
+        queryFn: () => chatService.getNotebook(sessionId),
+        enabled: !!sessionId,
+    });
 
+    // Fetch documents
+    const { data: documents = [], isLoading: documentsLoading } = useQuery({
+        queryKey: queryKeys.notebooks.documents(sessionId),
+        queryFn: () => chatService.getChatDocuments(sessionId),
+        enabled: !!sessionId,
+    });
+
+    // Upload document mutation
+    const uploadMutation = useMutation({
+        mutationFn: (file: File) => chatService.uploadFile(sessionId, file),
+    });
+
+    // Delete document mutation
+    const deleteMutation = useMutation({
+        mutationFn: (documentId: number) => chatService.deleteDocument(sessionId, documentId),
+    });
+
+    // Rename session mutation
+    const renameMutation = useMutation({
+        mutationFn: (title: string) => chatService.renameNotebook(parseInt(sessionId), title),
+    });
+
+    // Clear UI state on unmount
+    useEffect(() => {
         return () => {
-            dispatch(clearSession());
+            dispatch(clearUI());
         };
-    }, [sessionId, dispatch]);
+    }, [dispatch]);
 
-    // Handle errors
+    // Handle session load errors
     useEffect(() => {
-        if (!loading && !session && sessionId) {
-            // Session failed to load, redirect
+        if (sessionError) {
             toast.error('Failed to load notebook');
             router.push('/');
         }
-    }, [loading, session, sessionId, router]);
+    }, [sessionError, router]);
 
     const handleSelectSource = (id: number) => {
         dispatch(selectSource(id));
@@ -85,36 +97,46 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         if (!confirm('Are you sure you want to delete this source? This action cannot be undone.')) return;
 
         try {
-            await dispatch(deleteDocument({ sessionId, documentId: docId })).unwrap();
+            await deleteMutation.mutateAsync(docId);
+            // Update cache
+            queryClient.setQueryData(queryKeys.notebooks.documents(sessionId), (old: any[] = []) => {
+                return old.filter((d: any) => d.id !== docId);
+            });
+            if (selectedSourceId === docId) {
+                dispatch(selectSource(null));
+            }
             toast.success('Source deleted successfully');
-        } catch (error) {
-            console.error('Failed to delete source', error);
-            toast.error('Failed to delete source');
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Failed to delete source');
         }
     };
 
     const handleFileUpload = async (file: File) => {
         try {
-            await dispatch(uploadDocument({ sessionId, file })).unwrap();
+            await uploadMutation.mutateAsync(file);
+            // Refetch documents after upload
+            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.documents(sessionId) });
             toast.success('File uploaded and processing...');
-        } catch (error) {
-            console.error(error);
-            toast.error('Upload failed');
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Upload failed');
         }
     };
 
     const handleTitleChange = async (newTitle: string) => {
         try {
-            await dispatch(renameSession({ sessionId, title: newTitle })).unwrap();
+            await renameMutation.mutateAsync(newTitle);
+            // Update cache
+            queryClient.setQueryData(queryKeys.notebooks.detail(sessionId), (old: any) => {
+                return old ? { ...old, title: newTitle } : old;
+            });
             toast.success('Notebook renamed successfully');
-        } catch (error) {
-            console.error('Failed to rename notebook', error);
-            toast.error('Failed to rename notebook');
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || 'Failed to rename notebook');
         }
     };
 
     const handleCitationClick = (citation: any) => {
-        const foundDoc = documents.find(d => d.filename === citation.sourceName || d.name === citation.sourceName);
+        const foundDoc = documents.find((d: any) => d.filename === citation.sourceName || d.name === citation.sourceName);
 
         if (foundDoc) {
             dispatch(selectSource(foundDoc.id));
@@ -126,6 +148,10 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
             toast.warning(`Could not find source document: ${citation.sourceName}`);
         }
     };
+
+
+    const loading = sessionLoading || documentsLoading;
+    const uploading = uploadMutation.isPending;
 
     if (loading) {
         return (
