@@ -119,6 +119,19 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
         }
     };
 
+    const handleTitleChange = async (newTitle: string) => {
+        if (!session || !sessionId) return;
+
+        try {
+            await chatService.renameNotebook(parseInt(sessionId), newTitle);
+            setSession(prev => prev ? { ...prev, title: newTitle } : null);
+            toast.success("Notebook renamed successfully");
+        } catch (error) {
+            console.error("Failed to rename notebook", error);
+            toast.error("Failed to rename notebook");
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-full flex items-center justify-center bg-background">
@@ -165,7 +178,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                                 <p className={`text-sm font-medium truncate ${selectedSourceId === src.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>
                                     {src.filename || src.name}
                                 </p>
-                                <p className="text-[10px] text-muted-foreground/70 truncate">{src.created_at ? new Date(src.created_at).toLocaleDateString() : ''}</p>
+                                <p className="text-[10px] text-muted-foreground/70 truncate">{src.created_at ? new Date(src.created_at).toLocaleDateString('vi-VN') : ''}</p>
                             </div>
                             <Button
                                 variant="ghost"
@@ -280,7 +293,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
 
     return (
         <div className="h-full flex flex-col bg-background">
-            <Header title={session.title}>
+            <Header title={session.title} onTitleChange={handleTitleChange}>
                 <Button variant="outline" size="sm" className="hidden sm:flex"><Sparkles size={16} className="mr-2" /> Audio Overview</Button>
             </Header>
 

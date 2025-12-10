@@ -122,7 +122,7 @@ export default function SourceDetail({ source, onClose, highlightRange }: Source
                         </h2>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar size={10} />
-                            {source.created_at ? new Date(source.created_at).toLocaleDateString() : source.date || 'Unknown date'}
+                            {source.created_at ? new Date(source.created_at).toLocaleDateString('vi-VN') : source.date || 'Unknown date'}
                         </span>
                     </div>
                 </div>

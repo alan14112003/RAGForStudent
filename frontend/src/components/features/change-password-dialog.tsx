@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
     Dialog,
     DialogContent,
@@ -19,14 +22,43 @@ interface ChangePasswordDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+// Zod schema for password validation
+const passwordSchema = z.object({
+    currentPassword: z.string().optional(),
+    newPassword: z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+        .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+        .regex(/[0-9]/, 'Password must contain at least one number')
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character'),
+    confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+});
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
+
 export default function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        reset,
+        formState: { errors },
+    } = useForm<PasswordFormData>({
+        resolver: zodResolver(passwordSchema),
+        mode: 'onChange',
+    });
+
+    const newPassword = watch('newPassword', '');
+    const confirmPassword = watch('confirmPassword', '');
 
     // Password strength validation
     const passwordChecks = {
@@ -54,29 +86,12 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
         return 'Strong';
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!newPassword || !confirmPassword) {
-            toast.error('Please fill in all fields');
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            toast.error('New passwords do not match');
-            return;
-        }
-
-        if (passwordStrength < 3) {
-            toast.error('Password is too weak. Please choose a stronger password.');
-            return;
-        }
-
+    const onSubmit = async (data: PasswordFormData) => {
         setIsLoading(true);
 
         try {
             // TODO: Connect to backend API when available
-            // await authService.changePassword(currentPassword, newPassword);
+            // await authService.changePassword(data.currentPassword, data.newPassword);
 
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -91,9 +106,7 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
     };
 
     const handleClose = () => {
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        reset();
         setShowCurrentPassword(false);
         setShowNewPassword(false);
         setShowConfirmPassword(false);
@@ -124,7 +137,7 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                     </div>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
                     {/* Current Password */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
@@ -133,8 +146,7 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                         <div className="relative">
                             <Input
                                 type={showCurrentPassword ? 'text' : 'password'}
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                {...register('currentPassword')}
                                 placeholder="Enter current password"
                                 className="pr-10"
                             />
@@ -159,11 +171,9 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                         <div className="relative">
                             <Input
                                 type={showNewPassword ? 'text' : 'password'}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
+                                {...register('newPassword')}
                                 placeholder="Enter new password"
-                                className="pr-10"
-                                required
+                                className={`pr-10 ${errors.newPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                             />
                             <button
                                 type="button"
@@ -211,8 +221,7 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                         <div className="relative">
                             <Input
                                 type={showConfirmPassword ? 'text' : 'password'}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                {...register('confirmPassword')}
                                 placeholder="Re-enter new password"
                                 className={`pr-10 ${confirmPassword.length > 0
                                     ? passwordsMatch
@@ -220,7 +229,6 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                                         : 'border-red-500 focus-visible:ring-red-500'
                                     : ''
                                     }`}
-                                required
                             />
                             <button
                                 type="button"
@@ -230,13 +238,13 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
                                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
-                        {confirmPassword.length > 0 && !passwordsMatch && (
+                        {errors.confirmPassword && (
                             <p className="text-xs text-red-500 flex items-center gap-1">
                                 <X size={12} />
-                                Passwords do not match
+                                {errors.confirmPassword.message}
                             </p>
                         )}
-                        {passwordsMatch && (
+                        {passwordsMatch && !errors.confirmPassword && (
                             <p className="text-xs text-green-500 flex items-center gap-1">
                                 <Check size={12} />
                                 Passwords match
