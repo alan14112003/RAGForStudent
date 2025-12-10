@@ -41,7 +41,7 @@ export default function ProfilePage() {
             month: 'long',
             day: 'numeric'
         })
-        : 'Chưa xác định';
+        : 'Unknown';
 
     // Calculate days since registration
     const daysSinceRegistration = user?.createdAt
@@ -67,10 +67,10 @@ export default function ProfilePage() {
     const handleSaveProfile = async () => {
         try {
             // TODO: Connect to backend API when available
-            toast.success('Cập nhật hồ sơ thành công!');
+            toast.success('Profile updated successfully!');
             setIsEditing(false);
         } catch (error) {
-            toast.error('Không thể cập nhật hồ sơ. Vui lòng thử lại.');
+            toast.error('Unable to update profile. Please try again.');
         }
     };
 
@@ -89,7 +89,7 @@ export default function ProfilePage() {
                     className="gap-2"
                 >
                     <ArrowLeft size={16} />
-                    <span className="hidden sm:inline">Quay lại</span>
+                    <span className="hidden sm:inline">Back</span>
                 </Button>
             </Header>
 
@@ -117,7 +117,7 @@ export default function ProfilePage() {
                             {/* User Info */}
                             <div className="text-center sm:text-left text-white">
                                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
-                                    {user?.name || 'Người dùng'}
+                                    {user?.name || 'User'}
                                 </h1>
                                 <p className="text-white/80 flex items-center justify-center sm:justify-start gap-2">
                                     <Mail size={16} />
@@ -125,7 +125,7 @@ export default function ProfilePage() {
                                 </p>
                                 <p className="text-white/60 text-sm mt-2 flex items-center justify-center sm:justify-start gap-2">
                                     <Calendar size={14} />
-                                    Thành viên từ {joinDate}
+                                    Member since {joinDate}
                                 </p>
                             </div>
                         </div>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                                     <p className="text-2xl font-bold text-foreground">
                                         {daysSinceRegistration}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">Ngày hoạt động</p>
+                                    <p className="text-sm text-muted-foreground">Days Active</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -167,8 +167,8 @@ export default function ProfilePage() {
                         <CardHeader className="pb-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle className="text-xl">Thông tin tài khoản</CardTitle>
-                                    <CardDescription>Quản lý thông tin cá nhân của bạn</CardDescription>
+                                    <CardTitle className="text-xl">Account Information</CardTitle>
+                                    <CardDescription>Manage your personal information</CardDescription>
                                 </div>
                                 {!isEditing ? (
                                     <Button
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                                         className="gap-2"
                                     >
                                         <Edit2 size={14} />
-                                        Chỉnh sửa
+                                        Edit
                                     </Button>
                                 ) : (
                                     <div className="flex gap-2">
@@ -195,7 +195,7 @@ export default function ProfilePage() {
                                             className="gap-2"
                                         >
                                             <Save size={14} />
-                                            Lưu
+                                            Save
                                         </Button>
                                     </div>
                                 )}
@@ -211,8 +211,8 @@ export default function ProfilePage() {
                                     <span className="text-sm font-medium text-muted-foreground">Email</span>
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-foreground font-medium">{user?.email || 'Chưa cập nhật'}</p>
-                                    <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
+                                    <p className="text-foreground font-medium">{user?.email || 'Not updated'}</p>
+                                    <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                                 </div>
                             </div>
 
@@ -222,18 +222,18 @@ export default function ProfilePage() {
                                     <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                                         <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                                     </div>
-                                    <span className="text-sm font-medium text-muted-foreground">Họ và tên</span>
+                                    <span className="text-sm font-medium text-muted-foreground">Full Name</span>
                                 </div>
                                 <div className="flex-1">
                                     {isEditing ? (
                                         <Input
                                             value={editedName}
                                             onChange={(e) => setEditedName(e.target.value)}
-                                            placeholder="Nhập họ và tên"
+                                            placeholder="Enter full name"
                                             className="max-w-md"
                                         />
                                     ) : (
-                                        <p className="text-foreground font-medium">{user?.name || 'Chưa cập nhật'}</p>
+                                        <p className="text-foreground font-medium">{user?.name || 'Not updated'}</p>
                                     )}
                                 </div>
                             </div>
@@ -244,7 +244,7 @@ export default function ProfilePage() {
                                     <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                         <Lock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                                     </div>
-                                    <span className="text-sm font-medium text-muted-foreground">Mật khẩu</span>
+                                    <span className="text-sm font-medium text-muted-foreground">Password</span>
                                 </div>
                                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                     <p className="text-foreground font-medium">••••••••••</p>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                                         className="w-fit gap-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-900/20"
                                     >
                                         <Lock size={14} />
-                                        Đổi mật khẩu
+                                        Change Password
                                     </Button>
                                 </div>
                             </div>
@@ -265,24 +265,24 @@ export default function ProfilePage() {
                     {/* Danger Zone */}
                     <Card className="border-red-200 dark:border-red-900/50 shadow-lg">
                         <CardHeader className="pb-4">
-                            <CardTitle className="text-xl text-red-600 dark:text-red-400">Vùng nguy hiểm</CardTitle>
-                            <CardDescription>Các hành động không thể hoàn tác</CardDescription>
+                            <CardTitle className="text-xl text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+                            <CardDescription>Actions that cannot be undone</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-red-50/50 dark:bg-red-900/10">
                                 <div>
-                                    <p className="font-medium text-foreground">Xóa tài khoản</p>
+                                    <p className="font-medium text-foreground">Delete Account</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn
+                                        Permanently delete your account and all your data
                                     </p>
                                 </div>
                                 <Button
                                     variant="destructive"
                                     size="sm"
                                     className="w-fit"
-                                    onClick={() => toast.info('Tính năng này đang được phát triển')}
+                                    onClick={() => toast.info('This feature is under development')}
                                 >
-                                    Xóa tài khoản
+                                    Delete Account
                                 </Button>
                             </div>
                         </CardContent>

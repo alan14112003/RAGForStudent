@@ -66,7 +66,7 @@ export default function NotebookItem({
                         {notebook.source_count} {notebook.source_count === 1 ? 'source' : 'sources'}
                     </CardDescription>
                     <span className="text-[10px] text-muted-foreground">
-                        {new Date(notebook.updated_at ? notebook.updated_at : notebook.created_at).toLocaleDateString()}
+                        {new Date(notebook.updated_at ? notebook.updated_at : notebook.created_at).toLocaleDateString('vi-VN')}
                     </span>
                 </div>
             </CardContent>
