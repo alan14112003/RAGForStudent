@@ -15,8 +15,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import SourceDetail from "@/components/features/notebook/source-detail";
 import Header from '@/components/features/header';
 import { useRouter } from "next/navigation";
-import { chatService, ChatSessionDetail } from "@/services/chatService";
+import { chatService } from "@/services/chatService";
 import { toast } from "react-toastify";
+import { ChatSessionDetail } from "@/types";
 
 export default function NotebookPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -156,8 +157,8 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                                             setHighlightRange(undefined); // Reset highlight when manually clicking source
                                         }}
                                         className={`group w-full max-w-full flex items-center gap-3 p-2.5 rounded-lg transition-all cursor-pointer border relative pr-8 ${selectedSourceId === src.id
-                                                ? "bg-background border-primary/20 shadow-sm ring-1 ring-primary/10"
-                                                : "border-transparent hover:bg-background hover:border-border"
+                                            ? "bg-background border-primary/20 shadow-sm ring-1 ring-primary/10"
+                                            : "border-transparent hover:bg-background hover:border-border"
                                             }`}
                                     >
                                         <div className={`h-8 w-8 rounded flex items-center justify-center shrink-0 ${src.filename?.endsWith('.pdf') ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
@@ -210,7 +211,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                 <ResizableHandle />
 
                 {/* CENTER: CHAT */}
-                <ResizablePanel defaultSize={45} minSize={30} className="flex flex-col h-full overflow-hidden">
+                <ResizablePanel defaultSize={55} minSize={35} className="flex flex-col h-full overflow-hidden">
                     {/* Pass session messages and ID to chat interface */}
                     <ChatInterface
                         sessionId={sessionId}
@@ -222,7 +223,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                 <ResizableHandle />
 
                 {/* RIGHT SIDEBAR: STUDIO/DETAIL */}
-                <ResizablePanel defaultSize={35} minSize={20} maxSize={50} className="bg-muted/10 border-l flex flex-col h-full overflow-hidden">
+                <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="bg-muted/10 border-l flex flex-col h-full overflow-hidden">
                     {selectedSource ? (
                         <SourceDetail
                             source={selectedSource}

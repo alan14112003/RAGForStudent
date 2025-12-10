@@ -117,7 +117,7 @@ export default function MessageList({ messages, isLoading, onCitationClick, clas
     return (
         <div ref={containerRef} className="relative flex-1 flex flex-col overflow-hidden">
             <ScrollArea className={cn("flex-1 p-4", className)}>
-                <div className="space-y-4 max-w-3xl mx-auto">
+                <div className="space-y-4 w-full">
                     {messages.map((msg) => (
                         <MessageItem
                             key={msg.id}
