@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SourceDetail from "@/components/features/notebook/source-detail";
+import AddSourceModal from "@/components/features/notebook/AddSourceModal";
 import Header from '@/components/features/header';
 import { useRouter } from "next/navigation";
 import { chatService } from "@/services/chatService";
@@ -30,7 +31,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
     const [loading, setLoading] = useState(true);
     const [selectedSourceId, setSelectedSourceId] = useState<number | string | null>(null);
     const [uploading, setUploading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [showUploadModal, setShowUploadModal] = useState(false);
     const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
 
     const [documents, setDocuments] = useState<any[]>([]);
@@ -85,8 +86,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
         }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    const handleFileUpload = async (file: File) => {
         if (!file || !sessionId) return;
 
         try {
@@ -94,12 +94,12 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
             await chatService.uploadFile(sessionId, file);
             toast.success("File uploaded and processing...");
             await loadDocuments(sessionId);
+            setShowUploadModal(false);
         } catch (error) {
             console.error(error);
             toast.error("Upload failed");
         } finally {
             setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -135,7 +135,6 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
         <div className="flex flex-col h-full p-4 gap-4">
             <div className="flex items-center justify-between shrink-0">
                 <h2 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Sources</h2>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => fileInputRef.current?.click()}><Plus size={16} /></Button>
             </div>
 
             <div className="relative shrink-0">
@@ -187,20 +186,12 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                 </div>
             </ScrollArea>
 
-            <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileUpload}
-                accept=".pdf,.txt,.doc,.docx"
-            />
             <Button
                 className="w-full gap-2 shrink-0 bg-background border border-input text-foreground hover:bg-accent hover:text-accent-foreground shadow-sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                onClick={() => setShowUploadModal(true)}
             >
-                {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-                {uploading ? 'Uploading...' : 'Add Source'}
+                <Plus size={16} />
+                Add Source
             </Button>
         </div>
     );
@@ -345,6 +336,14 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
 
                 </ResizablePanelGroup>
             )}
+
+            {/* Add Source Modal */}
+            <AddSourceModal
+                open={showUploadModal}
+                onOpenChange={setShowUploadModal}
+                onUpload={handleFileUpload}
+                uploading={uploading}
+            />
         </div>
     );
 }
