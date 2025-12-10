@@ -6,6 +6,7 @@ export interface Notebook {
   created_at: string;
   updated_at: string;
   user_id: string;
+  source_count: number;
 }
 
 export interface Message {

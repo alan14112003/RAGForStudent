@@ -31,15 +31,29 @@ async def list_chats(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """List all chats for current user."""
+    """List all chats for current user with source count."""
     result = await db.execute(
         select(ChatSession)
         .filter(ChatSession.user_id == current_user.id)
+        .options(selectinload(ChatSession.documents))
         .order_by(ChatSession.updated_at.desc())
         .offset(skip)
         .limit(limit)
     )
-    return result.scalars().all()
+    chats = result.scalars().all()
+    
+    # Build response with source_count
+    return [
+        chat_schema.ChatSessionSummary(
+            id=chat.id,
+            user_id=chat.user_id,
+            title=chat.title,
+            created_at=chat.created_at,
+            updated_at=chat.updated_at,
+            source_count=len(chat.documents)
+        )
+        for chat in chats
+    ]
 
 @router.post("/", response_model=chat_schema.ChatSession)
 async def create_chat(

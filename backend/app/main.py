@@ -47,3 +47,4 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {"message": "Welcome to RAG Student Assistant API"}
+
