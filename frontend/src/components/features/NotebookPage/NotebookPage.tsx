@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
     ResizableHandle,
     ResizablePanel,
@@ -10,13 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { selectSource, setHighlightRange, clearUI } from '@/store/features/uiSlice';
+import { setMobileTab, clearUI } from '@/store/features/uiSlice';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatService } from '@/services/chatService';
 import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'react-toastify';
 import { useIsMobile } from '@/hooks';
-import { MobileTab } from '@/types';
 import Header from '@/components/features/Header/Header';
 import SourcesPanel from './components/SourcesPanel';
 import StudioPanel from './components/StudioPanel';
@@ -33,21 +32,12 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
     const queryClient = useQueryClient();
     const isMobile = useIsMobile();
 
-    const { selectedSourceId, highlightRange } = useAppSelector((state) => state.ui);
+    const { mobileTab } = useAppSelector((state) => state.ui);
 
-    const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
-
-    // Fetch session data
+    // Fetch session data (for header title and loading state)
     const { data: session, isLoading: sessionLoading, error: sessionError } = useQuery({
         queryKey: queryKeys.notebooks.detail(sessionId),
         queryFn: () => chatService.getNotebook(sessionId),
-        enabled: !!sessionId,
-    });
-
-    // Fetch documents
-    const { data: documents = [], isLoading: documentsLoading } = useQuery({
-        queryKey: queryKeys.notebooks.documents(sessionId),
-        queryFn: () => chatService.getChatDocuments(sessionId),
         enabled: !!sessionId,
     });
 
@@ -71,18 +61,6 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         }
     }, [sessionError, router]);
 
-    const handleSelectSource = (id: number) => {
-        dispatch(selectSource(id));
-        if (isMobile) {
-            setMobileTab('studio');
-        }
-    };
-
-    const handleCloseSource = () => {
-        dispatch(selectSource(null));
-        dispatch(setHighlightRange(undefined));
-    };
-
     const handleTitleChange = async (newTitle: string) => {
         try {
             await renameMutation.mutateAsync(newTitle);
@@ -96,23 +74,7 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
         }
     };
 
-    const handleCitationClick = (citation: any) => {
-        const foundDoc = documents.find((d: any) => d.filename === citation.sourceName || d.name === citation.sourceName);
-
-        if (foundDoc) {
-            dispatch(selectSource(foundDoc.id));
-            dispatch(setHighlightRange(citation.highlightRange));
-            if (isMobile) {
-                setMobileTab('studio');
-            }
-        } else {
-            toast.warning(`Could not find source document: ${citation.sourceName}`);
-        }
-    };
-
-    const loading = sessionLoading || documentsLoading;
-
-    if (loading) {
+    if (sessionLoading) {
         return (
             <div className="h-full flex items-center justify-center bg-background">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -133,58 +95,26 @@ export default function NotebookPage({ sessionId }: NotebookPageProps) {
             {/* Mobile Layout */}
             {isMobile ? (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <MobileTabNav activeTab={mobileTab} onTabChange={setMobileTab} />
+                    <MobileTabNav activeTab={mobileTab} onTabChange={(tab) => dispatch(setMobileTab(tab))} />
                     <div className="flex-1 overflow-hidden">
-                        {mobileTab === 'sources' && (
-                            <SourcesPanel
-                                documents={documents}
-                                selectedSourceId={selectedSourceId}
-                                onSelectSource={handleSelectSource}
-                            />
-                        )}
-                        {mobileTab === 'chat' && (
-                            <ChatPanel
-                                sessionId={sessionId}
-                                initialMessages={session.messages || []}
-                                onCitationClick={handleCitationClick}
-                            />
-                        )}
-                        {mobileTab === 'studio' && (
-                            <StudioPanel
-                                documents={documents}
-                                selectedSourceId={selectedSourceId}
-                                highlightRange={highlightRange}
-                                onCloseSource={handleCloseSource}
-                            />
-                        )}
+                        {mobileTab === 'sources' && <SourcesPanel />}
+                        {mobileTab === 'chat' && <ChatPanel />}
+                        {mobileTab === 'studio' && <StudioPanel />}
                     </div>
                 </div>
             ) : (
                 /* Desktop Layout */
                 <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
                     <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="h-full">
-                        <SourcesPanel
-                            documents={documents}
-                            selectedSourceId={selectedSourceId}
-                            onSelectSource={handleSelectSource}
-                        />
+                        <SourcesPanel />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={50} minSize={30} className="h-full">
-                        <ChatPanel
-                            sessionId={sessionId}
-                            initialMessages={session.messages || []}
-                            onCitationClick={handleCitationClick}
-                        />
+                        <ChatPanel />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={30} minSize={20} className="h-full">
-                        <StudioPanel
-                            documents={documents}
-                            selectedSourceId={selectedSourceId}
-                            highlightRange={highlightRange}
-                            onCloseSource={handleCloseSource}
-                        />
+                        <StudioPanel />
                     </ResizablePanel>
                 </ResizablePanelGroup>
             )}

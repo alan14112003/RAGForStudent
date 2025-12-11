@@ -6,22 +6,38 @@ import MessageList from './components/MessageList';
 import { Message } from '@/types';
 import { toast } from 'react-toastify';
 import { chatService } from '@/services/chatService';
-import { useAppSelector } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { selectSource, setHighlightRange, setMobileTab } from '@/store/features/uiSlice';
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { useIsMobile } from '@/hooks';
 
-interface ChatPanelProps {
-    sessionId: string;
-    initialMessages: any[];
-    onCitationClick?: (citation: any) => void;
-}
-
-export default function ChatPanel({ sessionId, initialMessages, onCitationClick }: ChatPanelProps) {
+export default function ChatPanel() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const dispatch = useAppDispatch();
+    const { sessionId } = useAppSelector((state) => state.ui);
     const user = useAppSelector((state) => state.auth.user);
+    const isMobile = useIsMobile();
 
+    // Fetch session data (uses cache)
+    const { data: session } = useQuery({
+        queryKey: queryKeys.notebooks.detail(sessionId),
+        queryFn: () => chatService.getNotebook(sessionId),
+        enabled: !!sessionId,
+    });
+
+    // Fetch documents for citation lookup (uses cache)
+    const { data: documents = [] } = useQuery({
+        queryKey: queryKeys.notebooks.documents(sessionId),
+        queryFn: () => chatService.getChatDocuments(sessionId),
+        enabled: !!sessionId,
+    });
+
+    // Initialize messages from session data
     useEffect(() => {
-        if (initialMessages) {
-            const uiMessages = initialMessages.map(m => ({
+        if (session?.messages) {
+            const uiMessages = session.messages.map((m: any) => ({
                 id: m.id.toString(),
                 role: m.role,
                 content: m.content,
@@ -37,7 +53,21 @@ export default function ChatPanel({ sessionId, initialMessages, onCitationClick 
             }));
             setMessages(uiMessages);
         }
-    }, [initialMessages]);
+    }, [session?.messages]);
+
+    const handleCitationClick = (citation: any) => {
+        const foundDoc = documents.find((d: any) => d.filename === citation.sourceName || d.name === citation.sourceName);
+
+        if (foundDoc) {
+            dispatch(selectSource(foundDoc.id));
+            dispatch(setHighlightRange(citation.highlightRange));
+            if (isMobile) {
+                dispatch(setMobileTab('studio'));
+            }
+        } else {
+            toast.warning(`Could not find source document: ${citation.sourceName}`);
+        }
+    };
 
     const handleSend = async (text: string) => {
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, createdAt: new Date() };
@@ -76,7 +106,7 @@ export default function ChatPanel({ sessionId, initialMessages, onCitationClick 
             <MessageList
                 messages={messages}
                 isLoading={isLoading}
-                onCitationClick={onCitationClick}
+                onCitationClick={handleCitationClick}
                 className="flex-1 min-h-0"
                 userInfo={user ? { name: user.name, picture: user.picture } : undefined}
             />

@@ -1,23 +1,23 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
-import { DocumentSource } from '@/types';
 import SourceDetail from './components/SourceDetail';
+import { useAppSelector } from '@/store';
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { chatService } from '@/services/chatService';
 
-interface StudioPanelProps {
-    documents: DocumentSource[];
-    selectedSourceId: number | string | null;
-    highlightRange?: { start: number; end: number };
-    onCloseSource: () => void;
-}
+export default function StudioPanel() {
+    const { sessionId, selectedSourceId, highlightRange } = useAppSelector((state) => state.ui);
 
-export default function StudioPanel({
-    documents,
-    selectedSourceId,
-    highlightRange,
-    onCloseSource,
-}: StudioPanelProps) {
-    const selectedSource = documents.find(d => d.id === selectedSourceId) || null;
+    // Fetch documents (uses cache)
+    const { data: documents = [] } = useQuery({
+        queryKey: queryKeys.notebooks.documents(sessionId),
+        queryFn: () => chatService.getChatDocuments(sessionId),
+        enabled: !!sessionId,
+    });
+
+    const selectedSource = documents.find((d: any) => d.id === selectedSourceId) || null;
 
     if (!selectedSource) {
         return (
@@ -36,7 +36,6 @@ export default function StudioPanel({
     return (
         <SourceDetail
             source={selectedSource}
-            onClose={onCloseSource}
             highlightRange={highlightRange}
         />
     );

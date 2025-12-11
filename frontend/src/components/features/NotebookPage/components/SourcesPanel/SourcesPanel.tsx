@@ -7,32 +7,40 @@ import { Plus, FolderOpen } from 'lucide-react';
 import { DocumentSource } from '@/types';
 import SourceItem from './components/SourceItem';
 import AddSourceModal from './components/AddSourceModal';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatService } from '@/services/chatService';
-import { useAppSelector } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { selectSource, setMobileTab } from '@/store/features/uiSlice';
 import { toast } from 'react-toastify';
 import { queryKeys } from '@/lib/queryKeys';
+import { useIsMobile } from '@/hooks';
 
-interface SourcesPanelProps {
-    documents: DocumentSource[];
-    selectedSourceId: number | string | null;
-    onSelectSource: (id: number) => void;
-}
-
-export default function SourcesPanel({
-    documents,
-    selectedSourceId,
-    onSelectSource,
-}: SourcesPanelProps) {
+export default function SourcesPanel() {
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const { sessionId } = useAppSelector((state) => state.ui);
+    const dispatch = useAppDispatch();
+    const { sessionId, selectedSourceId } = useAppSelector((state) => state.ui);
     const queryClient = useQueryClient();
+    const isMobile = useIsMobile();
+
+    // Fetch documents (uses cache from parent or fetches if needed)
+    const { data: documents = [] } = useQuery<DocumentSource[]>({
+        queryKey: queryKeys.notebooks.documents(sessionId),
+        queryFn: () => chatService.getChatDocuments(sessionId),
+        enabled: !!sessionId,
+    });
 
     // Upload document mutation
     const uploadMutation = useMutation({
         mutationFn: (file: File) => chatService.uploadFile(sessionId, file),
     });
     const uploading = uploadMutation.isPending;
+
+    const handleSelectSource = (id: number) => {
+        dispatch(selectSource(id));
+        if (isMobile) {
+            dispatch(setMobileTab('studio'));
+        }
+    };
 
     const handleUpload = async (file: File) => {
         await handleFileUpload(file);
@@ -77,7 +85,7 @@ export default function SourcesPanel({
                                     key={src.id}
                                     source={src}
                                     isSelected={selectedSourceId === src.id}
-                                    onClick={() => onSelectSource(src.id)}
+                                    onClick={() => handleSelectSource(src.id)}
                                 />
                             ))}
                         </div>
