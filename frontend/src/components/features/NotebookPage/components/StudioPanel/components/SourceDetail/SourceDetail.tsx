@@ -6,6 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, FileText, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAppDispatch } from '@/store';
+import { selectSource, setHighlightRange } from '@/store/features/uiSlice';
 
 interface SourceDetailProps {
     source: {
@@ -17,14 +19,19 @@ interface SourceDetailProps {
         created_at?: string;
         content?: string;
     } | null;
-    onClose: () => void;
     highlightRange?: {
         start: number;
         end: number;
     };
 }
 
-export default function SourceDetail({ source, onClose, highlightRange }: SourceDetailProps) {
+export default function SourceDetail({ source, highlightRange }: SourceDetailProps) {
+    const dispatch = useAppDispatch();
+
+    const handleClose = () => {
+        dispatch(selectSource(null));
+        dispatch(setHighlightRange(undefined));
+    };
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const highlightRef = useRef<HTMLSpanElement>(null);
 
@@ -115,7 +122,7 @@ export default function SourceDetail({ source, onClose, highlightRange }: Source
                         </span>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
+                <Button variant="ghost" size="icon" onClick={handleClose} className="shrink-0">
                     <X size={16} />
                 </Button>
             </div>
