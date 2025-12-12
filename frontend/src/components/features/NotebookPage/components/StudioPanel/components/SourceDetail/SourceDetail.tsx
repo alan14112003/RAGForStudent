@@ -3,11 +3,13 @@
 import { useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, FileText, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { X, FileText, Calendar, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAppDispatch } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store';
 import { selectSource, setHighlightRange } from '@/store/features/uiSlice';
+import SummaryPanel from '../SummaryPanel';
 
 interface SourceDetailProps {
     source: {
@@ -27,6 +29,7 @@ interface SourceDetailProps {
 
 export default function SourceDetail({ source, highlightRange }: SourceDetailProps) {
     const dispatch = useAppDispatch();
+    const { sessionId } = useAppSelector((state) => state.ui);
 
     const handleClose = () => {
         dispatch(selectSource(null));
@@ -107,6 +110,7 @@ export default function SourceDetail({ source, highlightRange }: SourceDetailPro
 
     return (
         <div className="flex flex-col h-full bg-background border-l">
+            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                     <div className="h-8 w-8 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 shrink-0">
@@ -127,11 +131,38 @@ export default function SourceDetail({ source, highlightRange }: SourceDetailPro
                 </Button>
             </div>
 
-            <ScrollArea className="flex-1 p-6 min-h-0" ref={scrollAreaRef}>
-                <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
-                    {renderContent()}
+            {/* Tabs */}
+            <Tabs defaultValue="content" className="flex-1 flex flex-col min-h-0">
+                <div className="px-4 pt-2 border-b">
+                    <TabsList className="grid w-full grid-cols-2 h-9">
+                        <TabsTrigger value="content" className="text-xs gap-1.5">
+                            <FileText className="h-3.5 w-3.5" />
+                            Nội dung
+                        </TabsTrigger>
+                        <TabsTrigger value="summary" className="text-xs gap-1.5">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Tóm tắt
+                        </TabsTrigger>
+                    </TabsList>
                 </div>
-            </ScrollArea>
+
+                <TabsContent value="content" className="flex-1 m-0 min-h-0">
+                    <ScrollArea className="h-full p-6" ref={scrollAreaRef}>
+                        <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
+                            {renderContent()}
+                        </div>
+                    </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="summary" className="flex-1 m-0 min-h-0">
+                    <ScrollArea className="h-full p-6">
+                        <SummaryPanel
+                            sessionId={sessionId}
+                            documentId={source.id}
+                        />
+                    </ScrollArea>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

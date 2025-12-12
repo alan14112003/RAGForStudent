@@ -48,6 +48,7 @@ async def get_current_user(
 from app.services.rag.service import RagService
 from app.services.llm import LLMService
 from app.services.storage import MinIOService
+from app.services.summary import SummaryService
 
 def get_rag_service() -> RagService:
     return RagService(
@@ -62,3 +63,9 @@ def get_llm_service() -> LLMService:
 
 def get_storage_service() -> MinIOService:
     return MinIOService()
+
+def get_summary_service(
+    llm_service: LLMService = Depends(get_llm_service)
+) -> SummaryService:
+    return SummaryService(llm_service=llm_service)
+

@@ -1,8 +1,9 @@
 'use client';
 
-import { Search, Loader2, Plus } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DashboardPagination from './components/DashboardPagination';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,18 +13,28 @@ import { toast } from 'react-toastify';
 import Header from '@/components/features/Header/Header';
 import NotebookItem from './components/NotebookItem';
 import CreateNotebookCard from './components/CreateNotebookCard';
-import { Notebook } from '@/types';
+import { Notebook, PaginatedNotebooks } from '@/types';
+import { useQueryParams } from '@/hooks';
+import { NOTEBOOKS_PAGE_SIZE } from '@/constants';
 
 export default function Dashboard() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const user = useAppSelector((state) => state.auth.user);
+    const queryParams = useQueryParams();
 
-    // Fetch notebooks using React Query
-    const { data: notebooks = [], isLoading } = useQuery({
-        queryKey: queryKeys.notebooks.list(),
-        queryFn: () => chatService.getNotebooks(),
+    // Get current page from URL, default to 1
+    const currentPage = queryParams.getNumber('page', 1);
+
+    // Fetch notebooks using React Query with pagination
+    const { data, isLoading } = useQuery<PaginatedNotebooks>({
+        queryKey: queryKeys.notebooks.list(currentPage),
+        queryFn: () => chatService.getNotebooks(currentPage, NOTEBOOKS_PAGE_SIZE),
     });
+
+    const notebooks = data?.items || [];
+    const totalPages = data?.total_pages || 1;
+    const total = data?.total || 0;
 
     // Create notebook mutation
     const createNotebookMutation = useMutation({
@@ -33,14 +44,18 @@ export default function Dashboard() {
     const handleCreateNotebook = async () => {
         try {
             const newNotebook = await createNotebookMutation.mutateAsync('New Notebook');
-            // Optimistically update cache
-            queryClient.setQueryData<Notebook[]>(queryKeys.notebooks.list(), (old = []) => {
-                return [newNotebook, ...old];
-            });
+            // Invalidate all notebook list queries
+            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all });
             toast.success('Notebook created successfully!');
             router.push(`/notebook/${newNotebook.id}`);
         } catch (error: any) {
             toast.error(error.response?.data?.detail || 'Failed to create notebook');
+        }
+    };
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            queryParams.set('page', page);
         }
     };
 
@@ -67,19 +82,31 @@ export default function Dashboard() {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        <CreateNotebookCard onClick={handleCreateNotebook} />
-                        {notebooks.map((nb) => (
-                            <NotebookItem
-                                key={nb.id}
-                                notebook={nb}
-                                onClick={() => router.push(`/notebook/${nb.id}`)}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <CreateNotebookCard onClick={handleCreateNotebook} />
+                            {notebooks.map((nb: Notebook) => (
+                                <NotebookItem
+                                    key={nb.id}
+                                    notebook={nb}
+                                    onClick={() => router.push(`/notebook/${nb.id}`)}
+                                />
+                            ))}
+                        </div>
+
+                        <DashboardPagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={total}
+                            itemsShown={notebooks.length}
+                            itemName="notebooks"
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </main>
         </div>
     );
 }
+
 

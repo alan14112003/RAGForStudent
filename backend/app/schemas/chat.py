@@ -48,3 +48,11 @@ class ChatRequest(BaseModel):
     question: str
     session_id: Optional[int] = None
     use_rag: bool = True
+
+class PaginatedChatSessionSummary(BaseModel):
+    items: List[ChatSessionSummary]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+

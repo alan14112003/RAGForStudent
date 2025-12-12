@@ -5,3 +5,4 @@ export * from './message.types';
 export * from './user.types';
 export * from './notebook.types';
 export * from './store.types';
+export * from './summary.types';
