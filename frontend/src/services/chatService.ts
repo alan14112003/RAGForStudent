@@ -1,5 +1,5 @@
 import api from './api';
-import { Notebook, ChatSessionDetail, PaginatedNotebooks } from '@/types';
+import { Notebook, ChatSessionDetail, PaginatedNotebooks, SummaryRequest, SummaryResponse, ChaptersResponse } from '@/types';
 
 export const chatService = {
     async getNotebooks(page: number = 1, pageSize: number = 12): Promise<PaginatedNotebooks> {
@@ -57,6 +57,24 @@ export const chatService = {
 
     async renameNotebook(id: number, title: string) {
         const response = await api.put(`/chats/${id}`, { title });
+        return response.data;
+    },
+
+    // Summary methods
+    async getDocumentChapters(sessionId: string, documentId: number): Promise<ChaptersResponse> {
+        const response = await api.get(`/chats/${sessionId}/documents/${documentId}/chapters`);
+        return response.data;
+    },
+
+    async summarizeDocument(
+        sessionId: string,
+        documentId: number,
+        request: SummaryRequest
+    ): Promise<SummaryResponse> {
+        const response = await api.post(
+            `/chats/${sessionId}/documents/${documentId}/summarize`,
+            request
+        );
         return response.data;
     }
 };

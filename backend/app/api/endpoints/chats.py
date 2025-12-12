@@ -18,9 +18,11 @@ from app.models.user import User
 from app.models.chat import ChatSession, ChatMessage
 from app.models.document import Document, DocumentStatus
 from app.schemas import chat as chat_schema
+from app.schemas import summary as summary_schema
 from app.services.rag.service import RagService, QueryWithLLMResult
 from app.services.llm import LLMService
 from app.services.storage import MinIOService
+from app.services.summary import SummaryService
 
 router = APIRouter()
 
@@ -494,3 +496,180 @@ async def update_chat(
     chat = result.scalars().first()
     
     return chat
+
+
+# ============================================================================
+# Summary Endpoints
+# ============================================================================
+
+@router.get("/{session_id}/documents/{document_id}/chapters", response_model=summary_schema.ChaptersResponse)
+async def get_document_chapters(
+    session_id: int,
+    document_id: int,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    storage_service: MinIOService = Depends(deps.get_storage_service),
+    summary_service: SummaryService = Depends(deps.get_summary_service),
+) -> Any:
+    """Get chapter/section structure of a document."""
+    # 1. Verify chat access
+    result = await db.execute(
+        select(ChatSession)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+    )
+    chat = result.scalars().first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    # 2. Get document
+    result = await db.execute(
+        select(Document)
+        .filter(Document.id == document_id, Document.session_id == session_id)
+    )
+    doc = result.scalars().first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # 3. Download and extract content
+    tmp_path = None
+    try:
+        suffix = Path(doc.filename).suffix
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = Path(tmp.name)
+        
+        storage_service.download_file(doc.file_path, tmp_path)
+        
+        # Extract content
+        from app.services.rag.converter import ConverterFactory
+        converter = ConverterFactory.create("file")
+        extracted_docs = converter.convert(str(tmp_path))
+        content = "\n\n".join([d.page_content for d in extracted_docs])
+        
+        # 4. Extract chapters
+        chapters = await summary_service.extract_chapters(content)
+        
+        return summary_schema.ChaptersResponse(
+            document_id=document_id,
+            chapters=chapters
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to extract chapters for doc {document_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to extract chapters: {str(e)}")
+    finally:
+        if tmp_path and tmp_path.exists():
+            os.remove(tmp_path)
+
+
+@router.post("/{session_id}/documents/{document_id}/summarize", response_model=summary_schema.SummaryResponse)
+async def summarize_document(
+    session_id: int,
+    document_id: int,
+    request: summary_schema.SummaryRequest,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    storage_service: MinIOService = Depends(deps.get_storage_service),
+    summary_service: SummaryService = Depends(deps.get_summary_service),
+) -> Any:
+    """Generate summary for a document with specified scope and format. Saves as chat message."""
+    # 1. Verify chat access
+    result = await db.execute(
+        select(ChatSession)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+    )
+    chat = result.scalars().first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    # 2. Get document
+    result = await db.execute(
+        select(Document)
+        .filter(Document.id == document_id, Document.session_id == session_id)
+    )
+    doc = result.scalars().first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # 3. Download and extract content
+    tmp_path = None
+    try:
+        suffix = Path(doc.filename).suffix
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = Path(tmp.name)
+        
+        storage_service.download_file(doc.file_path, tmp_path)
+        
+        # Extract content
+        from app.services.rag.converter import ConverterFactory
+        converter = ConverterFactory.create("file")
+        extracted_docs = converter.convert(str(tmp_path))
+        content = "\n\n".join([d.page_content for d in extracted_docs])
+        
+        # 4. Get chapters if needed for chapter scope
+        chapters = None
+        if request.scope == summary_schema.SummaryScope.CHAPTER:
+            chapters = await summary_service.extract_chapters(content)
+        
+        # 5. Generate summary
+        summary_text, chapter_title = await summary_service.summarize(
+            content=content,
+            scope=request.scope,
+            format=request.format,
+            chapter_indices=request.chapter_indices,
+            chapters=chapters
+        )
+        
+        # 6. Build formatted message content
+        scope_label = "toàn bộ tài liệu" if request.scope == summary_schema.SummaryScope.FULL else f"các chương: {chapter_title}"
+        format_labels = {
+            summary_schema.SummaryFormat.BULLET: "Bullet Points",
+            summary_schema.SummaryFormat.EXECUTIVE: "Executive Summary", 
+            summary_schema.SummaryFormat.TABLE: "Bảng tóm tắt"
+        }
+        format_label = format_labels.get(request.format, request.format.value)
+        
+        message_content = f"""## 📑 Tóm tắt tài liệu: {doc.filename}
+
+**Phạm vi:** {scope_label}\n
+**Định dạng:** {format_label}
+
+---
+
+{summary_text}"""
+        
+        # 7. Save as AI message in chat
+        ai_msg = ChatMessage(
+            session_id=session_id,
+            role="ai",
+            content=message_content,
+            sources=[]  # No RAG sources for summary
+        )
+        db.add(ai_msg)
+        await db.commit()
+        await db.refresh(ai_msg)
+        
+        return summary_schema.SummaryResponse(
+            document_id=document_id,
+            scope=request.scope,
+            format=request.format,
+            summary=summary_text,
+            chapter_title=chapter_title,
+            chapters=chapters,
+            message=summary_schema.SummaryMessageInfo(
+                id=ai_msg.id,
+                session_id=ai_msg.session_id,
+                role=ai_msg.role,
+                content=ai_msg.content,
+                created_at=ai_msg.created_at
+            )
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to summarize doc {document_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate summary: {str(e)}")
+    finally:
+        if tmp_path and tmp_path.exists():
+            os.remove(tmp_path)
+

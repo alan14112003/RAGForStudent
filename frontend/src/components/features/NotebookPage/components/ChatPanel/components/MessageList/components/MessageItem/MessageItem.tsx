@@ -68,6 +68,24 @@ export default function MessageItem({ message, onCitationClick, userInfo }: Mess
                         a: ({ node, href, children, ...props }) => (
                             <a href={href} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
                         ),
+                        // Table styling for summary tables
+                        table: ({ node, ...props }) => (
+                            <div className="overflow-x-auto my-3">
+                                <table className="w-full border-collapse border border-border text-sm" {...props} />
+                            </div>
+                        ),
+                        thead: ({ node, ...props }) => (
+                            <thead className="bg-muted/50" {...props} />
+                        ),
+                        th: ({ node, ...props }) => (
+                            <th className="border border-border px-3 py-2 text-left font-semibold text-foreground" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                            <td className="border border-border px-3 py-2 text-foreground" {...props} />
+                        ),
+                        tr: ({ node, ...props }) => (
+                            <tr className="hover:bg-muted/30 transition-colors" {...props} />
+                        ),
                     }}
                 >
                     {processedContent}
