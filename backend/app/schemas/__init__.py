@@ -11,3 +11,13 @@ from .summary import (
     ChaptersResponse,
     SummaryMessageInfo
 )
+from .quiz import (
+    QuizType,
+    QuizStatus,
+    QuestionType,
+    QuizGenerateRequest,
+    QuizQuestionResponse,
+    QuizResponse,
+    QuizListItem,
+    QuizListResponse
+)

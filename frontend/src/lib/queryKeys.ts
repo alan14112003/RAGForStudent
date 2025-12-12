@@ -9,5 +9,7 @@ export const queryKeys = {
             [...queryKeys.notebooks.all, 'chapters', sessionId, documentId] as const,
         summary: (sessionId: string | number, documentId: number, scope: string, format: string, chapterIndex?: number) =>
             [...queryKeys.notebooks.all, 'summary', sessionId, documentId, scope, format, chapterIndex] as const,
+        quizzes: (sessionId: string | number) => [...queryKeys.notebooks.all, 'quizzes', sessionId] as const,
+        quiz: (sessionId: string | number, quizId: number) => [...queryKeys.notebooks.all, 'quiz', sessionId, quizId] as const,
     },
 };

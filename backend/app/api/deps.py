@@ -69,3 +69,10 @@ def get_summary_service(
 ) -> SummaryService:
     return SummaryService(llm_service=llm_service)
 
+from app.services.quiz import QuizService
+
+def get_quiz_service(
+    llm_service: LLMService = Depends(get_llm_service)
+) -> QuizService:
+    return QuizService(llm_service=llm_service)
+
