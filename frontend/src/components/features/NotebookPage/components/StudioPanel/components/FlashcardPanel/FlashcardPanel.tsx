@@ -4,45 +4,45 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Plus, Loader2 } from 'lucide-react';
+import { Layers, Plus, Loader2 } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
-import { quizService } from '@/services/quizService';
+import { flashcardService } from '@/services/flashcardService';
 import { useAppSelector } from '@/store';
-import { QuizListItem } from '@/types';
+import { FlashcardSetListItem } from '@/types';
 import { toast } from 'react-toastify';
-import GenerateQuizDialog from './components/GenerateQuizDialog';
-import QuizItem from './components/QuizItem';
+import GenerateFlashcardDialog from './components/GenerateFlashcardDialog';
+import FlashcardItem from './components/FlashcardItem';
 
-export default function QuizPanel() {
+export default function FlashcardPanel() {
     const [showGenerateDialog, setShowGenerateDialog] = useState(false);
     const { sessionId } = useAppSelector((state) => state.ui);
     const queryClient = useQueryClient();
 
-    // Fetch quizzes
-    const { data: quizzesData, isLoading } = useQuery({
-        queryKey: queryKeys.notebooks.quizzes(sessionId),
-        queryFn: () => quizService.getQuizzes(sessionId),
+    // Fetch flashcard sets
+    const { data: flashcardsData, isLoading } = useQuery({
+        queryKey: queryKeys.notebooks.flashcards(sessionId),
+        queryFn: () => flashcardService.getFlashcardSets(sessionId),
         enabled: !!sessionId,
         refetchInterval: 5000, // Poll for status updates during generation
     });
 
-    const quizzes = quizzesData?.items || [];
+    const flashcardSets = flashcardsData?.items || [];
 
     // Delete mutation
     const deleteMutation = useMutation({
-        mutationFn: (quizId: number) => quizService.deleteQuiz(sessionId, quizId),
+        mutationFn: (setId: number) => flashcardService.deleteFlashcardSet(sessionId, setId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.quizzes(sessionId) });
-            toast.success('Đã xóa quiz');
+            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.flashcards(sessionId) });
+            toast.success('Đã xóa bộ flashcard');
         },
         onError: () => {
-            toast.error('Không thể xóa quiz');
+            toast.error('Không thể xóa bộ flashcard');
         },
     });
 
-    const handleDelete = (quizId: number) => {
-        if (confirm('Bạn có chắc muốn xóa quiz này?')) {
-            deleteMutation.mutate(quizId);
+    const handleDelete = (setId: number) => {
+        if (confirm('Bạn có chắc muốn xóa bộ flashcard này?')) {
+            deleteMutation.mutate(setId);
         }
     };
 
@@ -51,8 +51,8 @@ export default function QuizPanel() {
             {/* Header */}
             <div className="p-4 border-b flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
-                    <BookOpen size={18} className="text-purple-500" />
-                    <h3 className="font-semibold text-sm">Quiz & Trắc nghiệm</h3>
+                    <Layers size={18} className="text-blue-500" />
+                    <h3 className="font-semibold text-sm">Flashcard</h3>
                 </div>
                 <Button
                     size="sm"
@@ -61,32 +61,32 @@ export default function QuizPanel() {
                     onClick={() => setShowGenerateDialog(true)}
                 >
                     <Plus size={14} />
-                    <span className="hidden lg:inline">Tạo Quiz</span>
+                    <span className="hidden lg:inline">Tạo Flashcard</span>
                 </Button>
             </div>
 
-            {/* Quiz List */}
+            {/* Flashcard List */}
             <ScrollArea className="flex-1 min-h-0">
                 <div className="p-3">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-8">
                             <Loader2 className="animate-spin text-muted-foreground" size={24} />
                         </div>
-                    ) : quizzes.length === 0 ? (
+                    ) : flashcardSets.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
                             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                                <BookOpen size={20} className="opacity-50" />
+                                <Layers size={20} className="opacity-50" />
                             </div>
-                            <p className="text-sm font-medium">Chưa có quiz nào</p>
-                            <p className="text-xs mt-1">Chọn tài liệu và tạo quiz mới</p>
+                            <p className="text-sm font-medium">Chưa có flashcard nào</p>
+                            <p className="text-xs mt-1">Chọn tài liệu và tạo flashcard mới</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            {quizzes.map((quiz: QuizListItem) => (
-                                <QuizItem
-                                    key={quiz.id}
-                                    quiz={quiz}
-                                    onDelete={() => handleDelete(quiz.id)}
+                            {flashcardSets.map((set: FlashcardSetListItem) => (
+                                <FlashcardItem
+                                    key={set.id}
+                                    flashcardSet={set}
+                                    onDelete={() => handleDelete(set.id)}
                                 />
                             ))}
                         </div>
@@ -95,7 +95,7 @@ export default function QuizPanel() {
             </ScrollArea>
 
             {/* Generate Dialog */}
-            <GenerateQuizDialog
+            <GenerateFlashcardDialog
                 open={showGenerateDialog}
                 onOpenChange={setShowGenerateDialog}
             />

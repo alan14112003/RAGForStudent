@@ -5,10 +5,15 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
 from app.core import config, database
 from app.models.user import User
 from app.schemas import token as token_schema
+from app.services.quiz import QuizService
+from app.services.rag.service import RagService
+from app.services.llm import LLMService
+from app.services.storage import MinIOService
+from app.services.summary import SummaryService
+from app.services.flashcard import FlashcardService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{config.settings.API_STR}/auth/login/access-token")
 
@@ -45,11 +50,6 @@ async def get_current_user(
         raise credentials_exception
     return user
 
-from app.services.rag.service import RagService
-from app.services.llm import LLMService
-from app.services.storage import MinIOService
-from app.services.summary import SummaryService
-
 def get_rag_service() -> RagService:
     return RagService(
         qdrant_url=config.settings.QDRANT_URL,
@@ -69,10 +69,12 @@ def get_summary_service(
 ) -> SummaryService:
     return SummaryService(llm_service=llm_service)
 
-from app.services.quiz import QuizService
-
 def get_quiz_service(
     llm_service: LLMService = Depends(get_llm_service)
 ) -> QuizService:
     return QuizService(llm_service=llm_service)
 
+def get_flashcard_service(
+    llm_service: LLMService = Depends(get_llm_service)
+) -> FlashcardService:
+    return FlashcardService(llm_service=llm_service)

@@ -6,6 +6,7 @@ import MessageList from './components/MessageList';
 import { Message } from '@/types';
 import { toast } from 'react-toastify';
 import { chatService } from '@/services/chatService';
+import { documentService } from '@/services/documentService';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { selectSource, setHighlightRange, setMobileTab } from '@/store/features/uiSlice';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +32,7 @@ export default function ChatPanel() {
     // Fetch documents for citation lookup (uses cache)
     const { data: documents = [] } = useQuery({
         queryKey: queryKeys.notebooks.documents(sessionId),
-        queryFn: () => chatService.getChatDocuments(sessionId),
+        queryFn: () => documentService.getChatDocuments(sessionId),
         enabled: !!sessionId,
     });
 

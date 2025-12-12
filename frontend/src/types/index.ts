@@ -7,3 +7,4 @@ export * from './notebook.types';
 export * from './store.types';
 export * from './summary.types';
 export * from './quiz.types';
+export * from './flashcard.types';

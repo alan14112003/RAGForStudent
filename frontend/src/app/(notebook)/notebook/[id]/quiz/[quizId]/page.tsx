@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Home, RotateCcw } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
-import { chatService } from '@/services/chatService';
+import { quizService } from '@/services/quizService';
 import { Quiz, QuizQuestion } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +29,7 @@ export default function QuizPage() {
     // Fetch quiz with questions
     const { data: quiz, isLoading, error } = useQuery<Quiz>({
         queryKey: queryKeys.notebooks.quiz(sessionId, quizId),
-        queryFn: () => chatService.getQuiz(sessionId, quizId),
+        queryFn: () => quizService.getQuiz(sessionId, quizId),
         enabled: !!sessionId && !!quizId,
     });
 

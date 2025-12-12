@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, CheckCircle } from 'lucide-react';
-import { chatService } from '@/services/chatService';
+import { documentService } from '@/services/documentService';
 import { queryKeys } from '@/lib/queryKeys';
 import { SummaryScope, SummaryFormat, ChapterInfo } from '@/types';
 import { useAppDispatch } from '@/store';
@@ -27,7 +27,7 @@ export default function SummaryPanel({ sessionId, documentId }: SummaryPanelProp
         refetch: fetchChapters
     } = useQuery({
         queryKey: queryKeys.notebooks.chapters(sessionId, documentId),
-        queryFn: () => chatService.getDocumentChapters(sessionId, documentId),
+        queryFn: () => documentService.getDocumentChapters(sessionId, documentId),
         enabled: false, // Only fetch on demand
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
@@ -43,7 +43,7 @@ export default function SummaryPanel({ sessionId, documentId }: SummaryPanelProp
             format: SummaryFormat;
             chapterIndices?: number[]
         }) => {
-            return chatService.summarizeDocument(sessionId, documentId, {
+            return documentService.summarizeDocument(sessionId, documentId, {
                 scope,
                 format,
                 chapter_indices: chapterIndices,
