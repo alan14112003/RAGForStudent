@@ -2,6 +2,7 @@
 
 import { Sparkles } from 'lucide-react';
 import SourceDetail from './components/SourceDetail';
+import QuizPanel from './components/QuizPanel';
 import { useAppSelector } from '@/store';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
@@ -19,24 +20,34 @@ export default function StudioPanel() {
 
     const selectedSource = documents.find((d: any) => d.id === selectedSourceId) || null;
 
-    if (!selectedSource) {
+    // If a source is selected, show its details
+    if (selectedSource) {
         return (
-            <div className="h-full flex flex-col items-center justify-center bg-background/50 text-center p-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
-                    <Sparkles size={28} className="text-purple-500" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Studio</h3>
-                <p className="text-sm text-muted-foreground max-w-xs">
-                    Select a source to view details or get AI-powered insights.
-                </p>
-            </div>
+            <SourceDetail
+                source={selectedSource}
+                highlightRange={highlightRange}
+            />
         );
     }
 
+    // Default: show studio home with QuizPanel
     return (
-        <SourceDetail
-            source={selectedSource}
-            highlightRange={highlightRange}
-        />
+        <div className="h-full flex flex-col bg-background/50">
+            {/* Header */}
+            <div className="p-4 border-b flex items-center gap-2 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                    <Sparkles size={16} className="text-purple-500" />
+                </div>
+                <div>
+                    <h3 className="font-semibold text-sm">Studio</h3>
+                    <p className="text-xs text-muted-foreground">AI-powered learning tools</p>
+                </div>
+            </div>
+
+            {/* Quiz Panel */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+                <QuizPanel />
+            </div>
+        </div>
     );
 }
