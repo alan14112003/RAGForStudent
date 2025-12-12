@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { chatService } from '@/services/chatService';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { selectSource, setHighlightRange, setMobileTab } from '@/store/features/uiSlice';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { useIsMobile } from '@/hooks';
 
@@ -16,6 +16,7 @@ export default function ChatPanel() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const { sessionId } = useAppSelector((state) => state.ui);
     const user = useAppSelector((state) => state.auth.user);
     const isMobile = useIsMobile();
@@ -93,6 +94,10 @@ export default function ChatPanel() {
             };
 
             setMessages(prev => [...prev, aiMsg]);
+
+            // Invalidate session cache to ensure messages persist when switching tabs
+            queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.detail(sessionId) });
+
             setIsLoading(false);
         } catch (e) {
             console.error(e);

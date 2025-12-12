@@ -24,26 +24,41 @@ from app.services.storage import MinIOService
 
 router = APIRouter()
 
-@router.get("/", response_model=List[chat_schema.ChatSessionSummary])
+@router.get("/", response_model=chat_schema.PaginatedChatSessionSummary)
 async def list_chats(
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 12,
 ) -> Any:
-    """List all chats for current user with source count."""
+    """List all chats for current user with source count (paginated)."""
+    # Calculate skip based on page
+    skip = (page - 1) * page_size
+    
+    # Get total count
+    from sqlalchemy import func
+    total_result = await db.execute(
+        select(func.count(ChatSession.id))
+        .filter(ChatSession.user_id == current_user.id)
+    )
+    total = total_result.scalar() or 0
+    
+    # Get paginated results
     result = await db.execute(
         select(ChatSession)
         .filter(ChatSession.user_id == current_user.id)
         .options(selectinload(ChatSession.documents))
         .order_by(ChatSession.updated_at.desc())
         .offset(skip)
-        .limit(limit)
+        .limit(page_size)
     )
     chats = result.scalars().all()
     
+    # Calculate total pages
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+    
     # Build response with source_count
-    return [
+    items = [
         chat_schema.ChatSessionSummary(
             id=chat.id,
             user_id=chat.user_id,
@@ -54,6 +69,28 @@ async def list_chats(
         )
         for chat in chats
     ]
+    
+    return chat_schema.PaginatedChatSessionSummary(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
+
+@router.get("/stats", response_model=dict)
+async def get_chat_stats(
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get notebook stats for current user."""
+    from sqlalchemy import func
+    result = await db.execute(
+        select(func.count(ChatSession.id))
+        .filter(ChatSession.user_id == current_user.id)
+    )
+    total = result.scalar() or 0
+    return {"total": total}
 
 @router.post("/", response_model=chat_schema.ChatSession)
 async def create_chat(

@@ -29,8 +29,8 @@ export default function ProfilePage() {
         const loadStats = async () => {
             try {
                 setIsLoadingStats(true);
-                const notebooks = await chatService.getNotebooks();
-                setNotebookCount(notebooks.length);
+                const stats = await chatService.getNotebookStats();
+                setNotebookCount(stats.total);
             } catch (error) {
                 console.error('Failed to load notebook count:', error);
             } finally {
