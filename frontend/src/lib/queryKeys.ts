@@ -13,5 +13,7 @@ export const queryKeys = {
         quiz: (sessionId: string | number, quizId: number) => [...queryKeys.notebooks.all, 'quiz', sessionId, quizId] as const,
         flashcards: (sessionId: string | number) => [...queryKeys.notebooks.all, 'flashcards', sessionId] as const,
         flashcard: (sessionId: string | number, setId: number) => [...queryKeys.notebooks.all, 'flashcard', sessionId, setId] as const,
+        studioItems: (sessionId: string | number) => [...queryKeys.notebooks.all, 'studioItems', sessionId] as const,
     },
 };
+

@@ -91,7 +91,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                 {/* Header */}
                 <DialogHeader className="shrink-0 p-6 pb-4 border-b">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                             <Sparkles className="text-white" size={20} />
                         </div>
                         <div>
@@ -184,7 +184,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                     <Button
                         onClick={handleSubmit}
                         disabled={selectedDocIds.length === 0 || generateMutation.isPending}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        className="bg-linear-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                     >
                         {generateMutation.isPending && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -21,3 +21,5 @@ from .quiz import (
     QuizListItem,
     QuizListResponse
 )
+from .studio import StudioItem, StudioItemsResponse
+
