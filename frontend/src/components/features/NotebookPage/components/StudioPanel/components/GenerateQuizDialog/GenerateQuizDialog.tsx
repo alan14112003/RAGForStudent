@@ -124,7 +124,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                                         type="button"
                                         onClick={() => setQuizType(type.value)}
                                         className={`
-                                            p-4 rounded-xl border-2 text-left transition-all
+                                            p-4 rounded-xl border-2 text-left transition-all cursor-pointer
                                             ${quizType === type.value
                                                 ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                                                 : 'border-border hover:border-primary/50 hover:bg-accent'

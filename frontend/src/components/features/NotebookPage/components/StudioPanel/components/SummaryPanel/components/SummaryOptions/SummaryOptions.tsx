@@ -66,7 +66,7 @@ export default function SummaryOptions({
                             onScopeChange?.('full');
                         }}
                         className={`
-                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm
+                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm cursor-pointer
                             ${scope === 'full'
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -82,7 +82,7 @@ export default function SummaryOptions({
                             onScopeChange?.('chapter');
                         }}
                         className={`
-                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm
+                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm cursor-pointer
                             ${scope === 'chapter'
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -105,7 +105,7 @@ export default function SummaryOptions({
                         {chapters.length > 0 && (
                             <button
                                 onClick={selectAllChapters}
-                                className="text-xs text-primary hover:underline"
+                                className="text-xs text-primary hover:underline cursor-pointer"
                             >
                                 {selectedChapters.length === chapters.length ? 'Deselect All' : 'Select All'}
                             </button>
@@ -125,7 +125,7 @@ export default function SummaryOptions({
                                         key={chapter.index}
                                         onClick={() => toggleChapter(chapter.index)}
                                         className={`
-                                            w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-all
+                                            w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-all cursor-pointer
                                             ${isSelected
                                                 ? 'bg-primary/10 text-primary'
                                                 : 'hover:bg-muted/50'
@@ -166,7 +166,7 @@ export default function SummaryOptions({
                                 key={option.value}
                                 onClick={() => setFormat(option.value)}
                                 className={`
-                                    flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border-2 transition-all
+                                    flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border-2 transition-all cursor-pointer
                                     ${isSelected
                                         ? 'border-primary bg-primary/10 text-primary'
                                         : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
