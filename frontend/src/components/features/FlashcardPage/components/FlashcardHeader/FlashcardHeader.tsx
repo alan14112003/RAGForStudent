@@ -15,8 +15,8 @@ export default function FlashcardHeader({
     return (
         <div className="shrink-0 p-6 flex items-center justify-between z-50 relative">
             <div>
-                <h1 className="text-slate-800 dark:text-white text-xl font-semibold">Thông tin Flashcard</h1>
-                <p className="text-slate-500 dark:text-white/50 text-sm">Dựa trên {title}</p>
+                <h1 className="text-slate-800 dark:text-white text-xl font-semibold">Flashcard Info</h1>
+                <p className="text-slate-500 dark:text-white/50 text-sm">Based on {title}</p>
             </div>
 
             <div className="flex items-center gap-2">

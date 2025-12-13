@@ -29,9 +29,9 @@ interface GenerateQuizDialogProps {
 }
 
 const QUIZ_TYPE_OPTIONS = [
-    { value: 'single_choice' as QuizType, label: 'Một đáp án', description: 'Chỉ 1 đáp án đúng' },
-    { value: 'multiple_choice' as QuizType, label: 'Nhiều đáp án', description: '2-3 đáp án đúng' },
-    { value: 'mixed' as QuizType, label: 'Kết hợp', description: 'Cả 2 loại' },
+    { value: 'single_choice' as QuizType, label: 'Single Choice', description: 'One correct answer' },
+    { value: 'multiple_choice' as QuizType, label: 'Multiple Choice', description: 'Multiple correct answers' },
+    { value: 'mixed' as QuizType, label: 'Mixed', description: 'Both types' },
 ];
 
 export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizDialogProps) {
@@ -61,12 +61,12 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.quizzes(sessionId) });
-            toast.success('Đang tạo quiz, vui lòng đợi...');
+            toast.success('Generating quiz, please wait...');
             onOpenChange(false);
             resetForm();
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Không thể tạo quiz');
+            toast.error(error.response?.data?.detail || 'Failed to generate quiz');
         },
     });
 
@@ -79,7 +79,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
 
     const handleSubmit = () => {
         if (selectedDocIds.length === 0) {
-            toast.warning('Vui lòng chọn ít nhất một tài liệu');
+            toast.warning('Please select at least one document');
             return;
         }
         generateMutation.mutate();
@@ -95,9 +95,9 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                             <Sparkles className="text-white" size={20} />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg">Tạo Quiz mới</DialogTitle>
+                            <DialogTitle className="text-lg">Create New Quiz</DialogTitle>
                             <DialogDescription>
-                                Chọn tài liệu và cấu hình bài trắc nghiệm
+                                Select documents and configure the quiz
                             </DialogDescription>
                         </div>
                     </div>
@@ -116,7 +116,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
 
                         {/* Quiz Type */}
                         <div className="space-y-3">
-                            <Label className="text-sm font-medium">Loại câu hỏi</Label>
+                            <Label className="text-sm font-medium">Question Type</Label>
                             <div className="grid grid-cols-3 gap-3">
                                 {QUIZ_TYPE_OPTIONS.map((type) => (
                                     <button
@@ -143,7 +143,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                         {/* Number of Questions */}
                         <div className="space-y-2">
                             <Label htmlFor="numQuestions" className="text-sm font-medium">
-                                Số lượng câu hỏi
+                                Number of Questions
                             </Label>
                             <div className="flex items-center gap-3">
                                 <Input
@@ -157,18 +157,18 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                                     max={30}
                                     className="w-28"
                                 />
-                                <span className="text-sm text-muted-foreground">câu (10 - 30)</span>
+                                <span className="text-sm text-muted-foreground">questions (10 - 30)</span>
                             </div>
                         </div>
 
                         {/* Title (optional) */}
                         <div className="space-y-2">
                             <Label htmlFor="title" className="text-sm font-medium">
-                                Tiêu đề <span className="text-muted-foreground font-normal">(tùy chọn)</span>
+                                Title <span className="text-muted-foreground font-normal">(optional)</span>
                             </Label>
                             <Input
                                 id="title"
-                                placeholder="Để trống để tự động tạo tiêu đề"
+                                placeholder="Leave empty to auto-generate title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                             />
@@ -179,7 +179,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                 {/* Footer */}
                 <DialogFooter className="shrink-0 gap-2 sm:gap-2 border-t p-6 pt-4 relative z-10 bg-background">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Hủy
+                        Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
@@ -190,7 +190,7 @@ export default function GenerateQuizDialog({ open, onOpenChange }: GenerateQuizD
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
                         <Sparkles size={16} className="mr-2" />
-                        Tạo Quiz
+                        Create Quiz
                     </Button>
                 </DialogFooter>
             </DialogContent>

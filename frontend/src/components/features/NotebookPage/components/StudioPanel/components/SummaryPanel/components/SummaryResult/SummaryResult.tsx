@@ -14,23 +14,23 @@ interface SummaryResultProps {
 const formatLabels = {
     bullet: { label: 'Bullet Points', icon: List },
     executive: { label: 'Executive Summary', icon: FileText },
-    table: { label: 'Bảng tóm tắt', icon: Table2 },
+    table: { label: 'Summary Table', icon: Table2 },
 };
 
 const scopeLabels = {
-    full: 'Toàn bộ tài liệu',
-    chapter: 'Theo chương',
+    full: 'Full Document',
+    chapter: 'By Chapter',
 };
 
 export default function SummaryResult({ summary }: SummaryResultProps) {
     if (!summary) {
         return (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-3">
                     <FileText className="h-6 w-6 text-amber-500" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Chọn các tùy chọn và nhấn &quot;Tạo tóm tắt&quot; để bắt đầu
+                    Select options and press &quot;Generate Summary&quot; to start
                 </p>
             </div>
         );

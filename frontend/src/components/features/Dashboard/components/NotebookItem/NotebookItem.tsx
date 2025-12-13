@@ -83,7 +83,7 @@ export default function NotebookItem({ notebook, onClick }: NotebookItemProps) {
                 className="group rounded-2xl border-border/40 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden aspect-square bg-card"
                 onClick={onClick}
             >
-                <div className="h-24 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 relative p-4 transition-colors">
+                <div className="h-24 bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 relative p-4 transition-colors">
                     <div className="absolute top-1 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <NotebookMenu
                             onRenameClick={handleRenameClick}

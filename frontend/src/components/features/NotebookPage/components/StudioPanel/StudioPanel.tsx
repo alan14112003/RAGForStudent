@@ -47,10 +47,10 @@ export default function StudioPanel() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.studioItems(sessionId) });
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.quizzes(sessionId) });
-            toast.success('Đã xóa quiz');
+            toast.success('Quiz deleted');
         },
         onError: () => {
-            toast.error('Không thể xóa quiz');
+            toast.error('Failed to delete quiz');
         },
     });
 
@@ -59,10 +59,10 @@ export default function StudioPanel() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.studioItems(sessionId) });
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.flashcards(sessionId) });
-            toast.success('Đã xóa bộ flashcard');
+            toast.success('Flashcard set deleted');
         },
         onError: () => {
-            toast.error('Không thể xóa bộ flashcard');
+            toast.error('Failed to delete flashcard set');
         },
     });
 
@@ -111,7 +111,7 @@ export default function StudioPanel() {
                     >
                         <BookOpen size={14} />
                         <Plus size={12} />
-                        <span>Tạo Quiz</span>
+                        <span>Create Quiz</span>
                     </Button>
                     <Button
                         size="sm"
@@ -121,7 +121,7 @@ export default function StudioPanel() {
                     >
                         <Layers size={14} />
                         <Plus size={12} />
-                        <span>Tạo Flashcard</span>
+                        <span>Create Flashcard</span>
                     </Button>
                 </div>
             </div>
@@ -138,8 +138,8 @@ export default function StudioPanel() {
                             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
                                 <Sparkles size={20} className="opacity-50" />
                             </div>
-                            <p className="text-sm font-medium">Chưa có nội dung học tập</p>
-                            <p className="text-xs mt-1">Tạo Quiz hoặc Flashcard để bắt đầu</p>
+                            <p className="text-sm font-medium">No study content yet</p>
+                            <p className="text-xs mt-1">Create a Quiz or Flashcard to get started</p>
                         </div>
                     ) : (
                         <div className="space-y-2">

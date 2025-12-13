@@ -137,11 +137,11 @@ export default function SourceDetail({ source, highlightRange }: SourceDetailPro
                     <TabsList className="grid w-full grid-cols-2 h-9">
                         <TabsTrigger value="content" className="text-xs gap-1.5">
                             <FileText className="h-3.5 w-3.5" />
-                            Nội dung
+                            Content
                         </TabsTrigger>
                         <TabsTrigger value="summary" className="text-xs gap-1.5">
                             <Sparkles className="h-3.5 w-3.5" />
-                            Tóm tắt
+                            Summary
                         </TabsTrigger>
                     </TabsList>
                 </div>

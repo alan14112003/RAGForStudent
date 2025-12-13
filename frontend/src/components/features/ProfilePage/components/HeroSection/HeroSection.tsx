@@ -23,7 +23,7 @@ export default function HeroSection({ user }: HeroSectionProps) {
         : 'Unknown';
 
     return (
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 p-8 sm:p-12">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600 via-purple-600 to-pink-500 p-8 sm:p-12">
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />

@@ -15,22 +15,22 @@ export interface StudioStatusConfig {
 export const studioStatusRegistry: Record<StudioItemStatus, StudioStatusConfig> = {
     pending: {
         icon: <Loader2 size={12} className="animate-spin" />,
-        label: 'Đang chờ',
+        label: 'Pending',
         className: 'text-yellow-500 border-yellow-200',
     },
     generating: {
         icon: <Loader2 size={12} className="animate-spin" />,
-        label: 'Đang tạo',
+        label: 'Generating',
         className: 'text-blue-500 border-blue-200',
     },
     completed: {
         icon: <CheckCircle2 size={12} />,
-        label: 'Hoàn thành',
+        label: 'Completed',
         className: 'text-green-500 border-green-200',
     },
     failed: {
         icon: <XCircle size={12} />,
-        label: 'Lỗi',
+        label: 'Error',
         className: 'text-red-500 border-red-200',
     },
 };

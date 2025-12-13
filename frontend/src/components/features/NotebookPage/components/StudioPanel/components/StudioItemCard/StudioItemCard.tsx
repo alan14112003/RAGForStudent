@@ -2,7 +2,6 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { Trash2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,14 +38,14 @@ export default function StudioItemCard({ item, onDelete }: StudioItemCardProps) 
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const confirmMessage = typeConfig?.deleteConfirmMessage || 'Bạn có chắc muốn xóa?';
+        const confirmMessage = typeConfig?.deleteConfirmMessage || 'Are you sure you want to delete?';
         if (confirm(confirmMessage)) {
             onDelete();
         }
     };
 
     const createdAt = new Date(item.createdAt);
-    const timeAgo = formatDistanceToNow(createdAt, { addSuffix: true, locale: vi });
+    const timeAgo = formatDistanceToNow(createdAt, { addSuffix: true });
 
     // Fallback if config not found (defensive coding)
     if (!typeConfig) {

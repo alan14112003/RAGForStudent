@@ -2,9 +2,9 @@
 // Extensible config for quiz types
 
 export const quizTypeLabels: Record<string, string> = {
-    single_choice: 'Một đáp án',
-    multiple_choice: 'Nhiều đáp án',
-    mixed: 'Kết hợp',
+    single_choice: 'Single Choice',
+    multiple_choice: 'Multiple Choice',
+    mixed: 'Mixed',
 };
 
 /**

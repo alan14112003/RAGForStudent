@@ -30,7 +30,7 @@ export default function FlashcardControls({
                     )}
                 >
                     <RotateCcw size={20} />
-                    <span className="text-xs">Bắt đầu lại</span>
+                    <span className="text-xs">Restart</span>
                 </Button>
             </div>
 
@@ -46,7 +46,7 @@ export default function FlashcardControls({
                     isShowThumb={false}
                 />
                 <span className="shrink-0 text-sm font-medium text-slate-600 dark:text-white/80 whitespace-nowrap">
-                    {currentIndex + 1} / {totalCards} thẻ
+                    {currentIndex + 1} / {totalCards} cards
                 </span>
             </div>
 
@@ -62,7 +62,7 @@ export default function FlashcardControls({
                     )}
                 >
                     <Download size={20} />
-                    <span className="text-xs">Tải xuống</span>
+                    <span className="text-xs">Download</span>
                 </Button>
             </div>
         </div>

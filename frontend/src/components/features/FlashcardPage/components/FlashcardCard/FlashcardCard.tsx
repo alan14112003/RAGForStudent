@@ -50,7 +50,7 @@ export default function FlashcardCard({
 
                 {showHint && (
                     <div className="mt-8 text-sm text-slate-400 dark:text-white/40 flex items-center gap-2">
-                        <span>Xem đáp án</span>
+                        <span>Show answer</span>
                         <MousePointerClick size={16} />
                     </div>
                 )}
@@ -77,7 +77,7 @@ export default function FlashcardCard({
 
                 {showHint && (
                     <div className="mt-8 text-sm text-white/60 flex items-center gap-2">
-                        <span>Xem câu hỏi</span>
+                        <span>Show question</span>
                         <MousePointerClick size={16} />
                     </div>
                 )}

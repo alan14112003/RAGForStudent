@@ -65,7 +65,7 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
             <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-950">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="animate-spin text-violet-500" size={48} />
-                    <p className="text-slate-600 dark:text-white/70">Đang tải flashcard...</p>
+                    <p className="text-slate-600 dark:text-white/70">Loading flashcard...</p>
                 </div>
             </div>
         );
@@ -76,9 +76,9 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
             <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-950">
                 <div className="text-center">
                     <XCircle className="mx-auto text-red-500 mb-4" size={48} />
-                    <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-white">Không thể tải flashcard</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-white">Failed to load flashcard</h3>
                     <Button onClick={handleBackToNotebook} variant="secondary">
-                        Quay lại notebook
+                        Back to notebook
                     </Button>
                 </div>
             </div>
@@ -93,7 +93,7 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
 
             {/* Header */}
             <FlashcardHeader
-                title={flashcardSet.title || "Tài liệu"}
+                title={flashcardSet.title || "Document"}
                 onBack={handleBackToNotebook}
             />
 

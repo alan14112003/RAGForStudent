@@ -53,12 +53,12 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.flashcards(sessionId) });
-            toast.success('Đang tạo flashcard, vui lòng đợi...');
+            toast.success('Generating flashcards, please wait...');
             onOpenChange(false);
             resetForm();
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Không thể tạo flashcard');
+            toast.error(error.response?.data?.detail || 'Failed to generate flashcards');
         },
     });
 
@@ -70,7 +70,7 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
 
     const handleSubmit = () => {
         if (selectedDocIds.length === 0) {
-            toast.warning('Vui lòng chọn ít nhất một tài liệu');
+            toast.warning('Please select at least one document');
             return;
         }
         generateMutation.mutate();
@@ -86,9 +86,9 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
                             <Layers className="text-white" size={20} />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg">Tạo Flashcard mới</DialogTitle>
+                            <DialogTitle className="text-lg">Create New Flashcards</DialogTitle>
                             <DialogDescription>
-                                Chọn tài liệu và cấu hình bộ flashcard
+                                Select documents and configure the flashcard set
                             </DialogDescription>
                         </div>
                     </div>
@@ -108,7 +108,7 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
                         {/* Number of Cards */}
                         <div className="space-y-2">
                             <Label htmlFor="numCards" className="text-sm font-medium">
-                                Số lượng thẻ
+                                Number of Cards
                             </Label>
                             <div className="flex items-center gap-3">
                                 <Input
@@ -122,18 +122,18 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
                                     max={50}
                                     className="w-28"
                                 />
-                                <span className="text-sm text-muted-foreground">thẻ (10 - 50)</span>
+                                <span className="text-sm text-muted-foreground">cards (10 - 50)</span>
                             </div>
                         </div>
 
                         {/* Title (optional) */}
                         <div className="space-y-2">
                             <Label htmlFor="title" className="text-sm font-medium">
-                                Tiêu đề <span className="text-muted-foreground font-normal">(tùy chọn)</span>
+                                Title <span className="text-muted-foreground font-normal">(optional)</span>
                             </Label>
                             <Input
                                 id="title"
-                                placeholder="Để trống để tự động tạo tiêu đề"
+                                placeholder="Leave empty to auto-generate title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                             />
@@ -144,7 +144,7 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
                 {/* Footer */}
                 <DialogFooter className="shrink-0 gap-2 sm:gap-2 border-t p-6 pt-4 relative z-10 bg-background">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Hủy
+                        Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
@@ -155,7 +155,7 @@ export default function GenerateFlashcardDialog({ open, onOpenChange }: Generate
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
                         <Layers size={16} className="mr-2" />
-                        Tạo Flashcard
+                        Create Flashcards
                     </Button>
                 </DialogFooter>
             </DialogContent>
