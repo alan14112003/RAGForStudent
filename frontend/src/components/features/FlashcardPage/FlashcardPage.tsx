@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Loader2, XCircle } from 'lucide-react';
+import { Loader2, XCircle } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
 import { flashcardService } from '@/services/flashcardService';
 import { FlashcardSet } from '@/types';
 import FlashcardHeader from './components/FlashcardHeader';
 import FlashcardStack from './components/FlashcardStack';
 import FlashcardControls from './components/FlashcardControls';
+import { useAppDispatch } from '@/store';
+import { resetFlashcardState, nextCard, prevCard, flipCard } from '@/store/features/flashcardSlice';
 
 interface FlashcardPageProps {
     sessionId: string;
@@ -20,10 +21,7 @@ interface FlashcardPageProps {
 
 export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageProps) {
     const router = useRouter();
-
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isFlipped, setIsFlipped] = useState(false);
-    const [studiedCards, setStudiedCards] = useState<Set<number>>(new Set());
+    const dispatch = useAppDispatch();
 
     // Fetch flashcard set with cards
     const { data: flashcardSet, isLoading, error } = useQuery<FlashcardSet>({
@@ -33,36 +31,13 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
     });
 
     const cards = flashcardSet?.cards || [];
-    const currentCard = cards[currentIndex];
-    const isFirstCard = currentIndex === 0;
-    const isLastCard = currentIndex === cards.length - 1;
 
-    const handleFlip = useCallback(() => {
-        setIsFlipped(!isFlipped);
-        if (!isFlipped && currentCard) {
-            setStudiedCards((prev) => new Set(prev).add(currentCard.id));
-        }
-    }, [isFlipped, currentCard]);
-
-    const handleNext = useCallback(() => {
-        if (!isLastCard) {
-            setCurrentIndex((prev) => prev + 1);
-            setIsFlipped(false);
-        }
-    }, [isLastCard]);
-
-    const handlePrev = useCallback(() => {
-        if (!isFirstCard) {
-            setCurrentIndex((prev) => prev - 1);
-            setIsFlipped(false);
-        }
-    }, [isFirstCard]);
-
-    const handleRestart = () => {
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setStudiedCards(new Set());
-    };
+    // Reset state on unmount or when sessionId/flashcardId changes
+    useEffect(() => {
+        return () => {
+            dispatch(resetFlashcardState());
+        };
+    }, [dispatch, sessionId, flashcardId]);
 
     const handleBackToNotebook = () => {
         router.push(`/notebook/${sessionId}`);
@@ -73,24 +48,24 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                handleFlip();
+                dispatch(flipCard());
             } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                handleNext();
+                dispatch(nextCard(cards.length));
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                handlePrev();
+                dispatch(prevCard());
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleFlip, handleNext, handlePrev]);
+    }, [dispatch, cards]);
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-950">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="animate-spin text-blue-500" size={48} />
-                    <p className="text-muted-foreground">Đang tải flashcard...</p>
+                    <Loader2 className="animate-spin text-violet-500" size={48} />
+                    <p className="text-slate-600 dark:text-white/70">Đang tải flashcard...</p>
                 </div>
             </div>
         );
@@ -98,13 +73,11 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
 
     if (error || !flashcardSet) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-950">
                 <div className="text-center">
                     <XCircle className="mx-auto text-red-500 mb-4" size={48} />
-                    <h3 className="text-lg font-semibold mb-2">Không thể tải flashcard</h3>
-                    <p className="text-muted-foreground mb-4">Flashcard không tồn tại hoặc đã bị xóa.</p>
-                    <Button onClick={handleBackToNotebook}>
-                        <ArrowLeft className="mr-2" size={16} />
+                    <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-white">Không thể tải flashcard</h3>
+                    <Button onClick={handleBackToNotebook} variant="secondary">
                         Quay lại notebook
                     </Button>
                 </div>
@@ -112,60 +85,27 @@ export default function FlashcardPage({ sessionId, flashcardId }: FlashcardPageP
         );
     }
 
-    if (flashcardSet.status !== 'completed') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800">
-                <div className="text-center">
-                    <Loader2 className="mx-auto animate-spin text-blue-500 mb-4" size={48} />
-                    <h3 className="text-lg font-semibold mb-2">Flashcard đang được tạo</h3>
-                    <p className="text-muted-foreground mb-4">Vui lòng đợi trong giây lát...</p>
-                    <Button variant="outline" onClick={handleBackToNotebook}>
-                        <ArrowLeft className="mr-2" size={16} />
-                        Quay lại và đợi
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    // Flashcard study view
     return (
-        <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="h-screen w-full flex flex-col bg-linear-to-br from-violet-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-950 relative overflow-hidden">
+            {/* Background Glow Effects - Improved visual ambiance */}
+            <div className="absolute top-1/4 -left-64 w-[600px] h-[600px] bg-violet-300/30 dark:bg-violet-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-blue-300/20 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header */}
             <FlashcardHeader
-                title={flashcardSet.title}
-                currentIndex={currentIndex}
-                totalCards={cards.length}
+                title={flashcardSet.title || "Tài liệu"}
                 onBack={handleBackToNotebook}
             />
 
-            <ScrollArea className="h-[calc(100vh-150px)]">
-                <div className="p-4 pt-0">
-                    <div className="max-w-3xl mx-auto">
-                        {/* Flashcard Stack */}
-                        <div className="py-4">
-                            <FlashcardStack
-                                cards={cards}
-                                currentIndex={currentIndex}
-                                isFlipped={isFlipped}
-                                onFlip={handleFlip}
-                            />
-                        </div>
+            {/* Main Content */}
+            <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+                <FlashcardStack cards={cards} />
+            </div>
 
-                        {/* Controls */}
-                        <div className="mt-10">
-                            <FlashcardControls
-                                isFirstCard={isFirstCard}
-                                isLastCard={isLastCard}
-                                onPrev={handlePrev}
-                                onNext={handleNext}
-                                onFlip={handleFlip}
-                                onRestart={handleRestart}
-                                onComplete={handleBackToNotebook}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </ScrollArea>
+            {/* Bottom Controls */}
+            <div className="shrink-0 pb-6 z-50">
+                <FlashcardControls totalCards={cards.length} />
+            </div>
         </div>
     );
 }

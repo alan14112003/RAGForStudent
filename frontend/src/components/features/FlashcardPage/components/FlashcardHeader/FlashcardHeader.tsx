@@ -1,46 +1,33 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface FlashcardHeaderProps {
     title: string;
-    currentIndex: number;
-    totalCards: number;
     onBack: () => void;
 }
 
 export default function FlashcardHeader({
     title,
-    currentIndex,
-    totalCards,
     onBack,
 }: FlashcardHeaderProps) {
-    const progressPercentage = totalCards > 0 ? ((currentIndex + 1) / totalCards) * 100 : 0;
-
     return (
-        <div className="shrink-0 p-4 pb-0">
-            <div className="max-w-3xl mx-auto">
-                <div className="flex items-center justify-between mb-4">
-                    <Button variant="ghost" size="sm" onClick={onBack}>
-                        <ArrowLeft className="mr-2" size={16} />
-                        Thoát
-                    </Button>
-                    <div className="text-center">
-                        <h2
-                            className="font-semibold text-sm truncate max-w-[200px]"
-                            title={title}
-                        >
-                            {title}
-                        </h2>
-                    </div>
-                    <Badge variant="secondary" className="text-sm">
-                        {currentIndex + 1} / {totalCards}
-                    </Badge>
-                </div>
-                <Progress value={progressPercentage} className="mb-4 h-2" />
+        <div className="shrink-0 p-6 flex items-center justify-between z-50 relative">
+            <div>
+                <h1 className="text-slate-800 dark:text-white text-xl font-semibold">Thông tin Flashcard</h1>
+                <p className="text-slate-500 dark:text-white/50 text-sm">Dựa trên {title}</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onBack}
+                    className="text-slate-500 dark:text-white/70 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-full"
+                >
+                    <X size={24} />
+                </Button>
             </div>
         </div>
     );
