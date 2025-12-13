@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { queryKeys } from '@/lib/queryKeys';
-import { chatService } from '@/services/chatService';
+import { documentService } from '@/services/documentService';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { selectSource } from '@/store/features/uiSlice';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,7 +27,7 @@ export default function SourceItem({ source, isSelected, onClick }: SourceItemPr
 
     // Delete document mutation
     const deleteMutation = useMutation({
-        mutationFn: (documentId: number) => chatService.deleteDocument(sessionId!, documentId),
+        mutationFn: (documentId: number) => documentService.deleteDocument(sessionId!, documentId),
     });
 
     const handleDeleteSource = async (docId: number) => {

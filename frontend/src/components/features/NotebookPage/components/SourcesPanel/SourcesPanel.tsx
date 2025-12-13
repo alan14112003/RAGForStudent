@@ -8,7 +8,7 @@ import { DocumentSource } from '@/types';
 import SourceItem from './components/SourceItem';
 import AddSourceModal from './components/AddSourceModal';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { chatService } from '@/services/chatService';
+import { documentService } from '@/services/documentService';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { selectSource, setMobileTab } from '@/store/features/uiSlice';
 import { toast } from 'react-toastify';
@@ -25,13 +25,13 @@ export default function SourcesPanel() {
     // Fetch documents (uses cache from parent or fetches if needed)
     const { data: documents = [] } = useQuery<DocumentSource[]>({
         queryKey: queryKeys.notebooks.documents(sessionId),
-        queryFn: () => chatService.getChatDocuments(sessionId),
+        queryFn: () => documentService.getChatDocuments(sessionId),
         enabled: !!sessionId,
     });
 
     // Upload document mutation
     const uploadMutation = useMutation({
-        mutationFn: (file: File) => chatService.uploadFile(sessionId, file),
+        mutationFn: (file: File) => documentService.uploadFile(sessionId, file),
     });
     const uploading = uploadMutation.isPending;
 

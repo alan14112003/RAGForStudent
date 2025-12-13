@@ -17,6 +17,7 @@ class ChatSession(Base):
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="session", cascade="all, delete-orphan")
     quizzes = relationship("Quiz", back_populates="session", cascade="all, delete-orphan")
+    flashcard_sets = relationship("FlashcardSet", back_populates="session", cascade="all, delete-orphan")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"

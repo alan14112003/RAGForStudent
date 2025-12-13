@@ -1,5 +1,5 @@
 import api from './api';
-import { Notebook, ChatSessionDetail, PaginatedNotebooks, SummaryRequest, SummaryResponse, ChaptersResponse, Quiz, QuizListResponse, QuizGenerateRequest } from '@/types';
+import { Notebook, ChatSessionDetail, PaginatedNotebooks } from '@/types';
 
 export const chatService = {
     async getNotebooks(page: number = 1, pageSize: number = 12): Promise<PaginatedNotebooks> {
@@ -30,27 +30,6 @@ export const chatService = {
         return response.data;
     },
 
-    async uploadFile(sessionId: string, file: File) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // The backend expects multipart/form-data
-        const response = await api.post(`/chats/${sessionId}/files`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return response.data;
-    },
-    async getChatDocuments(sessionId: string) {
-        const response = await api.get(`/chats/${sessionId}/documents`);
-        return response.data;
-    },
-
-    async deleteDocument(sessionId: string, documentId: number) {
-        await api.delete(`/chats/${sessionId}/documents/${documentId}`);
-    },
-
     async deleteNotebook(id: number) {
         await api.delete(`/chats/${id}`);
     },
@@ -58,46 +37,5 @@ export const chatService = {
     async renameNotebook(id: number, title: string) {
         const response = await api.put(`/chats/${id}`, { title });
         return response.data;
-    },
-
-    // Summary methods
-    async getDocumentChapters(sessionId: string, documentId: number): Promise<ChaptersResponse> {
-        const response = await api.get(`/chats/${sessionId}/documents/${documentId}/chapters`);
-        return response.data;
-    },
-
-    async summarizeDocument(
-        sessionId: string,
-        documentId: number,
-        request: SummaryRequest
-    ): Promise<SummaryResponse> {
-        const response = await api.post(
-            `/chats/${sessionId}/documents/${documentId}/summarize`,
-            request
-        );
-        return response.data;
-    },
-
-    // Quiz methods
-    async generateQuiz(
-        sessionId: string,
-        request: QuizGenerateRequest
-    ): Promise<Quiz> {
-        const response = await api.post(`/chats/${sessionId}/quizzes`, request);
-        return response.data;
-    },
-
-    async getQuizzes(sessionId: string): Promise<QuizListResponse> {
-        const response = await api.get(`/chats/${sessionId}/quizzes`);
-        return response.data;
-    },
-
-    async getQuiz(sessionId: string, quizId: number): Promise<Quiz> {
-        const response = await api.get(`/chats/${sessionId}/quizzes/${quizId}`);
-        return response.data;
-    },
-
-    async deleteQuiz(sessionId: string, quizId: number): Promise<void> {
-        await api.delete(`/chats/${sessionId}/quizzes/${quizId}`);
     }
 };

@@ -48,7 +48,7 @@ export default function DocumentSelector({
                     <button
                         type="button"
                         onClick={toggleAll}
-                        className="text-xs text-primary hover:underline"
+                        className="text-xs text-primary hover:underline cursor-pointer"
                     >
                         {selectedIds.length === documents.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                     </button>

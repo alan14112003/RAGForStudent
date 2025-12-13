@@ -6,6 +6,7 @@ import { useAppSelector } from '@/store';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { chatService } from '@/services/chatService';
+import { differenceInDays } from 'date-fns';
 import Header from '@/components/features/Header/Header';
 import HeroSection from './components/HeroSection';
 import StatsCards from './components/StatsCards';
@@ -22,7 +23,7 @@ export default function ProfilePage() {
     const [isLoadingStats, setIsLoadingStats] = useState(true);
 
     const daysSinceRegistration = user?.createdAt
-        ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        ? differenceInDays(new Date(), new Date(user.createdAt))
         : 0;
 
     useEffect(() => {

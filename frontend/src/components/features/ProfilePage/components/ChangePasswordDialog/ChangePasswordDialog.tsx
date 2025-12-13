@@ -125,7 +125,7 @@ export default function ChangePasswordDialog({ open, onOpenChange }: ChangePassw
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-orange-500 to-pink-500 flex items-center justify-center">
                             <Lock className="h-5 w-5 text-white" />
                         </div>
                         <div>

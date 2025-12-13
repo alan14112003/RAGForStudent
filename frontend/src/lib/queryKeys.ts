@@ -11,5 +11,9 @@ export const queryKeys = {
             [...queryKeys.notebooks.all, 'summary', sessionId, documentId, scope, format, chapterIndex] as const,
         quizzes: (sessionId: string | number) => [...queryKeys.notebooks.all, 'quizzes', sessionId] as const,
         quiz: (sessionId: string | number, quizId: number) => [...queryKeys.notebooks.all, 'quiz', sessionId, quizId] as const,
+        flashcards: (sessionId: string | number) => [...queryKeys.notebooks.all, 'flashcards', sessionId] as const,
+        flashcard: (sessionId: string | number, setId: number) => [...queryKeys.notebooks.all, 'flashcard', sessionId, setId] as const,
+        studioItems: (sessionId: string | number) => [...queryKeys.notebooks.all, 'studioItems', sessionId] as const,
     },
 };
+

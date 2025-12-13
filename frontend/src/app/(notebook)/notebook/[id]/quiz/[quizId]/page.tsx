@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Home, RotateCcw } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
-import { chatService } from '@/services/chatService';
+import { quizService } from '@/services/quizService';
 import { Quiz, QuizQuestion } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +29,7 @@ export default function QuizPage() {
     // Fetch quiz with questions
     const { data: quiz, isLoading, error } = useQuery<Quiz>({
         queryKey: queryKeys.notebooks.quiz(sessionId, quizId),
-        queryFn: () => chatService.getQuiz(sessionId, quizId),
+        queryFn: () => quizService.getQuiz(sessionId, quizId),
         enabled: !!sessionId && !!quizId,
     });
 
@@ -93,10 +93,10 @@ export default function QuizPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="animate-spin text-purple-500" size={48} />
-                    <p className="text-muted-foreground">Đang tải quiz...</p>
+                    <p className="text-muted-foreground">Loading quiz...</p>
                 </div>
             </div>
         );
@@ -104,15 +104,15 @@ export default function QuizPage() {
 
     if (error || !quiz) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
                 <Card className="w-full max-w-md">
                     <CardContent className="pt-6 text-center">
                         <XCircle className="mx-auto text-red-500 mb-4" size={48} />
-                        <h3 className="text-lg font-semibold mb-2">Không thể tải quiz</h3>
-                        <p className="text-muted-foreground mb-4">Quiz không tồn tại hoặc đã bị xóa.</p>
+                        <h3 className="text-lg font-semibold mb-2">Failed to load quiz</h3>
+                        <p className="text-muted-foreground mb-4">Quiz does not exist or has been deleted.</p>
                         <Button onClick={handleBackToNotebook}>
                             <ArrowLeft className="mr-2" size={16} />
-                            Quay lại notebook
+                            Back to notebook
                         </Button>
                     </CardContent>
                 </Card>
@@ -122,15 +122,15 @@ export default function QuizPage() {
 
     if (quiz.status !== 'completed') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
                 <Card className="w-full max-w-md">
                     <CardContent className="pt-6 text-center">
                         <Loader2 className="mx-auto animate-spin text-blue-500 mb-4" size={48} />
-                        <h3 className="text-lg font-semibold mb-2">Quiz đang được tạo</h3>
-                        <p className="text-muted-foreground mb-4">Vui lòng đợi trong giây lát...</p>
+                        <h3 className="text-lg font-semibold mb-2">Quiz is being generated</h3>
+                        <p className="text-muted-foreground mb-4">Please wait a moment...</p>
                         <Button variant="outline" onClick={handleBackToNotebook}>
                             <ArrowLeft className="mr-2" size={16} />
-                            Quay lại và đợi
+                            Back and wait
                         </Button>
                     </CardContent>
                 </Card>
@@ -144,7 +144,7 @@ export default function QuizPage() {
         const isPassed = percentage >= 70;
 
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 p-4">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 p-4">
                 <Card className="w-full max-w-lg">
                     <CardHeader className="text-center">
                         <div className={cn(
@@ -158,7 +158,7 @@ export default function QuizPage() {
                             )}
                         </div>
                         <CardTitle className="text-2xl">
-                            {isPassed ? 'Chúc mừng!' : 'Cần cải thiện'}
+                            {isPassed ? 'Congratulations!' : 'Needs Improvement'}
                         </CardTitle>
                         <CardDescription>
                             {quiz.title}
@@ -169,18 +169,18 @@ export default function QuizPage() {
                             {percentage}%
                         </div>
                         <p className="text-muted-foreground mb-4">
-                            Bạn đã trả lời đúng {score.correct}/{score.total} câu hỏi
+                            You answered {score.correct}/{score.total} questions correctly
                         </p>
                         <Progress value={percentage} className="h-3" />
                     </CardContent>
                     <CardFooter className="flex gap-2 justify-center">
                         <Button variant="outline" onClick={handleRestart}>
                             <RotateCcw className="mr-2" size={16} />
-                            Làm lại
+                            Restart
                         </Button>
                         <Button onClick={handleBackToNotebook}>
                             <Home className="mr-2" size={16} />
-                            Về Notebook
+                            Back to Notebook
                         </Button>
                     </CardFooter>
                 </Card>
@@ -190,14 +190,14 @@ export default function QuizPage() {
 
     // Quiz question view
     return (
-        <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="h-screen flex flex-col bg-linear-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
             {/* Fixed Header */}
             <div className="shrink-0 p-4 pb-0">
                 <div className="max-w-3xl mx-auto">
                     <div className="flex items-center justify-between mb-4">
                         <Button variant="ghost" size="sm" onClick={handleBackToNotebook}>
                             <ArrowLeft className="mr-2" size={16} />
-                            Thoát
+                            Exit
                         </Button>
                         <Badge variant="secondary" className="text-sm">
                             {currentIndex + 1} / {questions.length}
@@ -220,7 +220,7 @@ export default function QuizPage() {
                                             variant={isMultipleChoice ? 'default' : 'secondary'}
                                             className="shrink-0"
                                         >
-                                            {isMultipleChoice ? 'Nhiều đáp án' : 'Một đáp án'}
+                                            {isMultipleChoice ? 'Multiple Answers' : 'Single Answer'}
                                         </Badge>
                                     </div>
                                     <CardTitle className="text-lg leading-relaxed mt-2">
@@ -280,7 +280,7 @@ export default function QuizPage() {
                                     {isSubmitted && currentQuestion.explanation && (
                                         <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                                             <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
-                                                Giải thích:
+                                                Explanation:
                                             </p>
                                             <p className="text-sm text-blue-700 dark:text-blue-400">
                                                 {currentQuestion.explanation}
@@ -291,7 +291,7 @@ export default function QuizPage() {
                                 <CardFooter className="flex justify-between">
                                     <div className="text-sm text-muted-foreground">
                                         {isMultipleChoice && !isSubmitted && (
-                                            <span>Chọn tất cả đáp án đúng</span>
+                                            <span>Select all correct answers</span>
                                         )}
                                     </div>
                                     <div className="flex gap-2">
@@ -300,11 +300,11 @@ export default function QuizPage() {
                                                 onClick={handleSubmit}
                                                 disabled={selectedAnswers.length === 0}
                                             >
-                                                Kiểm tra
+                                                Check
                                             </Button>
                                         ) : (
                                             <Button onClick={handleNext}>
-                                                {isLastQuestion ? 'Xem kết quả' : 'Câu tiếp theo'}
+                                                {isLastQuestion ? 'View Results' : 'Next Question'}
                                                 <ArrowRight className="ml-2" size={16} />
                                             </Button>
                                         )}

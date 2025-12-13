@@ -14,9 +14,9 @@ interface SummaryOptionsProps {
 }
 
 const formatOptions = [
-    { value: 'bullet' as SummaryFormat, label: 'Bullet Points', icon: List, description: 'Các điểm chính' },
-    { value: 'executive' as SummaryFormat, label: 'Executive', icon: FileText, description: 'Tóm tắt điều hành' },
-    { value: 'table' as SummaryFormat, label: 'Table', icon: Table2, description: 'Bảng tóm tắt' },
+    { value: 'bullet' as SummaryFormat, label: 'Bullet Points', icon: List, description: 'Key points' },
+    { value: 'executive' as SummaryFormat, label: 'Executive', icon: FileText, description: 'Executive summary' },
+    { value: 'table' as SummaryFormat, label: 'Table', icon: Table2, description: 'Summary table' },
 ];
 
 export default function SummaryOptions({
@@ -58,7 +58,7 @@ export default function SummaryOptions({
         <div className="space-y-4">
             {/* Scope Selection */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Phạm vi</label>
+                <label className="text-sm font-medium text-foreground">Scope</label>
                 <div className="grid grid-cols-2 gap-2">
                     <button
                         onClick={() => {
@@ -66,7 +66,7 @@ export default function SummaryOptions({
                             onScopeChange?.('full');
                         }}
                         className={`
-                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm
+                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm cursor-pointer
                             ${scope === 'full'
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -74,7 +74,7 @@ export default function SummaryOptions({
                         `}
                     >
                         <FileText className="h-4 w-4" />
-                        Toàn bộ tài liệu
+                        Full Document
                     </button>
                     <button
                         onClick={() => {
@@ -82,7 +82,7 @@ export default function SummaryOptions({
                             onScopeChange?.('chapter');
                         }}
                         className={`
-                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm
+                            flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all text-sm cursor-pointer
                             ${scope === 'chapter'
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -90,7 +90,7 @@ export default function SummaryOptions({
                         `}
                     >
                         <List className="h-4 w-4" />
-                        Theo chương/phần
+                        By Chapter/Section
                     </button>
                 </div>
             </div>
@@ -100,21 +100,21 @@ export default function SummaryOptions({
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-foreground">
-                            Chọn chương/phần ({selectedChapters.length} đã chọn)
+                            Select Chapters/Sections ({selectedChapters.length} selected)
                         </label>
                         {chapters.length > 0 && (
                             <button
                                 onClick={selectAllChapters}
-                                className="text-xs text-primary hover:underline"
+                                className="text-xs text-primary hover:underline cursor-pointer"
                             >
-                                {selectedChapters.length === chapters.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                                {selectedChapters.length === chapters.length ? 'Deselect All' : 'Select All'}
                             </button>
                         )}
                     </div>
                     {isLoadingChapters ? (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Đang phân tích cấu trúc tài liệu...
+                            Analyzing document structure...
                         </div>
                     ) : chapters.length > 0 ? (
                         <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2">
@@ -125,7 +125,7 @@ export default function SummaryOptions({
                                         key={chapter.index}
                                         onClick={() => toggleChapter(chapter.index)}
                                         className={`
-                                            w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-all
+                                            w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-all cursor-pointer
                                             ${isSelected
                                                 ? 'bg-primary/10 text-primary'
                                                 : 'hover:bg-muted/50'
@@ -133,7 +133,7 @@ export default function SummaryOptions({
                                         `}
                                     >
                                         <div className={`
-                                            h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0
+                                            h-4 w-4 rounded border-2 flex items-center justify-center shrink-0
                                             ${isSelected
                                                 ? 'border-primary bg-primary text-primary-foreground'
                                                 : 'border-border'
@@ -148,7 +148,7 @@ export default function SummaryOptions({
                         </div>
                     ) : (
                         <p className="text-sm text-muted-foreground py-2">
-                            Không tìm thấy cấu trúc chương trong tài liệu
+                            No chapter structure found in this document
                         </p>
                     )}
                 </div>
@@ -156,7 +156,7 @@ export default function SummaryOptions({
 
             {/* Format Selection */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Định dạng</label>
+                <label className="text-sm font-medium text-foreground">Format</label>
                 <div className="grid grid-cols-3 gap-2">
                     {formatOptions.map((option) => {
                         const Icon = option.icon;
@@ -166,7 +166,7 @@ export default function SummaryOptions({
                                 key={option.value}
                                 onClick={() => setFormat(option.value)}
                                 className={`
-                                    flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border-2 transition-all
+                                    flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border-2 transition-all cursor-pointer
                                     ${isSelected
                                         ? 'border-primary bg-primary/10 text-primary'
                                         : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50'
@@ -190,10 +190,10 @@ export default function SummaryOptions({
                 {isGenerating ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang tạo tóm tắt...
+                        Generating summary...
                     </>
                 ) : (
-                    '✨ Tạo tóm tắt'
+                    '✨ Generate Summary'
                 )}
             </Button>
         </div>
