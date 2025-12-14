@@ -18,6 +18,7 @@ from app.services.exceptions import LLMRateLimitError
 from app.services.llm import LLMService
 from app.services.rag.converter import ConverterFactory
 from app.services.rag.qdrant_storage.qdrant_storage import QdrantStorage
+from app.services.rag.reranker import get_reranker
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 logger = logging.getLogger(__name__)
@@ -314,10 +315,6 @@ class RagService:
             chunk_count=len(chunks),
         )
 
-
-
-
-
     async def search_with_scores(
         self,
         user_id: str,
@@ -348,9 +345,6 @@ class RagService:
         
         return await storage.search_with_score(query=query, k=k, filter=qdrant_filter)
 
-
-
-
     async def query_with_llm(
         self,
         user_id: str,
@@ -361,6 +355,8 @@ class RagService:
         metadata_filter: Optional[Dict[str, Any]] = None,
         temperature: float = 0.1,
         max_tokens: int = 1000,
+        use_reranking: bool = True,
+        initial_k: int = 10,
     ) -> QueryWithLLMResult:
         """
         Query với RAG và trả lời bằng LLM
@@ -369,25 +365,31 @@ class RagService:
             user_id: ID của user
             question: Câu hỏi
             llm_service: Instance của LLMService
-            k: Số lượng chunks để retrieve
+            k: Số lượng chunks cuối cùng để sử dụng (sau reranking nếu enabled)
             metadata_filter: Filter metadata
             temperature: Temperature cho LLM
             max_tokens: Max tokens cho response
+            use_reranking: Enable Cross Encoder reranking
+            initial_k: Số lượng chunks để retrieve ban đầu (trước reranking)
             
         Returns:
             QueryWithLLMResult với answer và sources
         """
         
         logger.info(
-            f"Query with LLM for user={user_id}, question='{question[:100]}...', k={k}"
+            f"Query with LLM for user={user_id}, question='{question}', "
+            f"k={k}, use_reranking={use_reranking}"
         )
         
         # 1. Retrieve relevant chunks từ vector store
+        # If reranking is enabled, retrieve more documents initially
+        retrieve_k = initial_k if use_reranking else k
+        
         results = await self.search_with_scores(
             user_id=user_id,
             session_id=session_id,
             query=question,
-            k=k,
+            k=retrieve_k,
             metadata_filter=metadata_filter,
         )
 
@@ -397,8 +399,17 @@ class RagService:
             logger.warning(f"No relevant chunks found for question: '{question}'")
             # Tiep tuc xu ly voi empty context
 
+        # 2. Rerank if enabled
+        if use_reranking and results:
+            reranker = get_reranker()
+            results = reranker.rerank(
+                query=question,
+                documents=results,
+                top_k=k,
+            )
+
         
-        # 2. Chuẩn bị sources và context
+        # 3. Chuẩn bị sources và context
         sources = []
         context_parts = []
         
@@ -430,7 +441,7 @@ class RagService:
         
         logger.info(f"Retrieved {len(sources)} chunks, total context length: {len(context)}")
         
-        # 3. Gọi LLM để generate answer
+        # 4. Gọi LLM để generate answer
         try:
             llm_response = llm_service.answer_with_context(
                 question=question,
@@ -461,8 +472,6 @@ class RagService:
             logger.error(f"Failed to generate LLM answer: {str(e)}", exc_info=True)
             raise ValueError(f"Failed to generate answer: {str(e)}")
 
-
-
     async def delete_document(self, session_id: str, document_id: str) -> None:
         """Delete document from vector store"""
         if not session_id:
@@ -481,7 +490,6 @@ class RagService:
                 )
             ]
         )
-        
         
         logger.info("Deleting document_id=%s from session=%s collection", document_id, session_id)
         await storage.delete_documents(filter)

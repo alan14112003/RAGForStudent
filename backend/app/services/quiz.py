@@ -138,10 +138,10 @@ NỘI DUNG TÀI LIỆU:
             return content
         
         # Truncate at word boundary
-        truncated = content[:max_chars]
+        truncated = content
         last_space = truncated.rfind(' ')
-        if last_space > max_chars * 0.8:
-            truncated = truncated[:last_space]
+        # if last_space > max_chars * 0.8:
+        #     truncated = truncated[:last_space]
         
         logger.warning(f"Content truncated from {len(content)} to {len(truncated)} chars")
         return truncated + "\n\n[... Nội dung đã được rút gọn ...]"

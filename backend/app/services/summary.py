@@ -133,13 +133,13 @@ Tóm tắt:"""
             return content
         
         # Truncate and add notice
-        truncated = content[:max_chars]
+        truncated = content
         # Try to end at a sentence or paragraph
         last_period = truncated.rfind('.')
         last_newline = truncated.rfind('\n')
         cut_point = max(last_period, last_newline)
-        if cut_point > max_chars * 0.8:
-            truncated = truncated[:cut_point + 1]
+        # if cut_point > max_chars * 0.8:
+        #     truncated = truncated[:cut_point + 1]
         
         return truncated + "\n\n[... nội dung đã được rút gọn ...]"
 
