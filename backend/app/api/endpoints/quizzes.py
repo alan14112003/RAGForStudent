@@ -14,13 +14,16 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
-from app.models.user import User
+
 from app.models.chat import ChatSession
 from app.models.document import Document
 from app.models.quiz import Quiz, QuizQuestion, QuizStatus, QuizType, QuestionType
 from app.schemas import quiz as quiz_schema
 from app.services.quiz import QuizService
 from app.services.storage import MinIOService
+from app.services.rag.converter import ConverterFactory
+from app.socket import emit_studio_items_updated
+from app.core.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +37,6 @@ async def _get_documents_content(
     storage_service: MinIOService
 ) -> str:
     """Helper to get combined content from multiple documents."""
-    from app.services.rag.converter import ConverterFactory
     
     # Get documents
     result = await db.execute(
@@ -77,6 +79,7 @@ async def _get_documents_content(
 async def _generate_quiz_background(
     quiz_id: int,
     session_id: int,
+    user_id: int,
     document_ids: List[int],
     quiz_type: QuizType,
     num_questions: int,
@@ -134,6 +137,9 @@ async def _generate_quiz_background(
             
             logger.info(f"Quiz {quiz_id} generated with {len(questions)} questions")
             
+            # Emit socket event to notify user
+            await emit_studio_items_updated(user_id, session_id)
+            
         except Exception as e:
             logger.error(f"Failed to generate quiz {quiz_id}: {e}")
             try:
@@ -152,7 +158,7 @@ async def generate_quiz(
     request: quiz_schema.QuizGenerateRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
     storage_service: MinIOService = Depends(deps.get_storage_service),
     quiz_service: QuizService = Depends(deps.get_quiz_service),
 ) -> Any:
@@ -160,7 +166,7 @@ async def generate_quiz(
     # 1. Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -199,11 +205,11 @@ async def generate_quiz(
     await db.refresh(quiz)
     
     # 5. Start background generation
-    from app.core.database import SessionLocal
     background_tasks.add_task(
         _generate_quiz_background,
         quiz_id=quiz.id,
         session_id=session_id,
+        user_id=user_id,
         document_ids=request.document_ids,
         quiz_type=request.quiz_type,
         num_questions=request.num_questions,
@@ -219,13 +225,13 @@ async def generate_quiz(
 async def list_quizzes(
     session_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ) -> Any:
     """List all quizzes for a chat session."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -250,13 +256,13 @@ async def get_quiz(
     session_id: int,
     quiz_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ) -> Any:
     """Get a specific quiz with all questions."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -283,13 +289,13 @@ async def delete_quiz(
     session_id: int,
     quiz_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ):
     """Delete a quiz."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -306,3 +312,6 @@ async def delete_quiz(
     
     await db.delete(quiz)
     await db.commit()
+    
+    # Emit socket event to notify user
+    await emit_studio_items_updated(user_id, session_id)

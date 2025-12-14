@@ -18,3 +18,4 @@ llama-index
 pymysql
 pypdf
 python-dotenv
+python-socketio[asyncio]

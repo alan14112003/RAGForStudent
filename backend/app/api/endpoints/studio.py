@@ -12,6 +12,7 @@ from app.api import deps
 from app.models.user import User
 from app.models.chat import ChatSession
 from app.schemas.studio import StudioItem, StudioItemsResponse
+from sqlalchemy.future import select
 
 router = APIRouter()
 
@@ -27,7 +28,6 @@ async def list_studio_items(
     Items are sorted by created_at descending (newest first).
     Uses a single UNION query for efficiency.
     """
-    from sqlalchemy.future import select
     
     # Verify chat access
     result = await db.execute(

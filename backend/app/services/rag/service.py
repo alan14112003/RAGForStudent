@@ -18,6 +18,7 @@ from app.services.exceptions import LLMRateLimitError
 from app.services.llm import LLMService
 from app.services.rag.converter import ConverterFactory
 from app.services.rag.qdrant_storage.qdrant_storage import QdrantStorage
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +335,7 @@ class RagService:
         logger.info("Searching with scores in session=%s collection (user=%s, k=%d)", session_id, user_id, k)
         
         # No longer need to filter by session_id in metadata since we are in a dedicated collection
-        from qdrant_client.models import Filter
+        
         
         # If there are other filters arguments, we'd add them here.
         # For now we use empty filter or metadata_filter if provided
@@ -471,7 +472,6 @@ class RagService:
         
         # Create filter for document_id
         # We stored document_id in metadata
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
         
         filter = Filter(
             must=[

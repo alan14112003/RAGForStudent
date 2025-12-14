@@ -3,14 +3,16 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import authReducer from './features/authSlice';
 import uiReducer from './features/uiSlice';
 import flashcardReducer from './features/flashcardSlice';
+import socketReducer from './features/socketSlice';
 
 export const store = configureStore({
-    reducer: {
-        auth: authReducer,
-        ui: uiReducer,
-        flashcard: flashcardReducer,
-    },
-    devTools: process.env.NODE_ENV !== 'production',
+  reducer: {
+    auth: authReducer,
+    ui: uiReducer,
+    flashcard: flashcardReducer,
+    socket: socketReducer,
+  },
+  devTools: process.env.NODE_ENV !== 'production',
 });
 
 export type RootState = ReturnType<typeof store.getState>;

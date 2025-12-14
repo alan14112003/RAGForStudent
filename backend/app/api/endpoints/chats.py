@@ -23,6 +23,10 @@ from app.services.rag.service import RagService, QueryWithLLMResult
 from app.services.llm import LLMService
 from app.services.storage import MinIOService
 from app.services.summary import SummaryService
+from sqlalchemy import func
+from sqlalchemy import update
+from app.schemas.document import DocumentWithContent
+from app.services.rag.converter import ConverterFactory
 
 router = APIRouter()
 
@@ -38,7 +42,6 @@ async def list_chats(
     skip = (page - 1) * page_size
     
     # Get total count
-    from sqlalchemy import func
     total_result = await db.execute(
         select(func.count(ChatSession.id))
         .filter(ChatSession.user_id == current_user.id)
@@ -86,7 +89,6 @@ async def get_chat_stats(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """Get notebook stats for current user."""
-    from sqlalchemy import func
     result = await db.execute(
         select(func.count(ChatSession.id))
         .filter(ChatSession.user_id == current_user.id)
@@ -296,7 +298,6 @@ async def upload_file(
             # await db.commit()
             
             # Use update statement instead
-            from sqlalchemy import update
             await db.execute(
                 update(Document)
                 .where(Document.id == doc_id)
@@ -333,8 +334,6 @@ async def get_chat_documents(
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    from app.schemas.document import DocumentWithContent
-    from app.services.rag.converter import ConverterFactory
     
     docs_with_content = []
     
@@ -540,7 +539,6 @@ async def get_document_chapters(
         storage_service.download_file(doc.file_path, tmp_path)
         
         # Extract content
-        from app.services.rag.converter import ConverterFactory
         converter = ConverterFactory.create("file")
         extracted_docs = converter.convert(str(tmp_path))
         content = "\n\n".join([d.page_content for d in extracted_docs])
@@ -600,7 +598,6 @@ async def summarize_document(
         storage_service.download_file(doc.file_path, tmp_path)
         
         # Extract content
-        from app.services.rag.converter import ConverterFactory
         converter = ConverterFactory.create("file")
         extracted_docs = converter.convert(str(tmp_path))
         content = "\n\n".join([d.page_content for d in extracted_docs])

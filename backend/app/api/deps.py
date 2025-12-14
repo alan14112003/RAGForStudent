@@ -50,6 +50,32 @@ async def get_current_user(
         raise credentials_exception
     return user
 
+
+def get_current_user_id(
+    token: str = Depends(oauth2_scheme)
+) -> int:
+    """
+    Get current user ID from JWT token without database query.
+    Use this when you only need user_id to avoid session expiry issues.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(
+            token, 
+            config.settings.SECRET_KEY, 
+            algorithms=[config.settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        return int(user_id)
+    except JWTError:
+        raise credentials_exception
+
 def get_rag_service() -> RagService:
     return RagService(
         qdrant_url=config.settings.QDRANT_URL,

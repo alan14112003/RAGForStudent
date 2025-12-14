@@ -14,7 +14,6 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
-from app.models.user import User
 from app.models.chat import ChatSession
 from app.models.document import Document
 from app.models.flashcard import FlashcardSet, Flashcard, FlashcardStatus
@@ -77,6 +76,7 @@ async def _get_documents_content(
 async def _generate_flashcards_background(
     flashcard_set_id: int,
     session_id: int,
+    user_id: int,
     document_ids: List[int],
     num_cards: int,
     db_session_factory,
@@ -129,6 +129,10 @@ async def _generate_flashcards_background(
             
             logger.info(f"FlashcardSet {flashcard_set_id} generated with {len(cards)} cards")
             
+            # Emit socket event to notify user
+            from app.socket import emit_studio_items_updated
+            await emit_studio_items_updated(user_id, session_id)
+            
         except Exception as e:
             logger.error(f"Failed to generate flashcard set {flashcard_set_id}: {e}")
             try:
@@ -147,7 +151,7 @@ async def generate_flashcards(
     request: flashcard_schema.FlashcardGenerateRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
     storage_service: MinIOService = Depends(deps.get_storage_service),
     flashcard_service: FlashcardService = Depends(deps.get_flashcard_service),
 ) -> Any:
@@ -155,7 +159,7 @@ async def generate_flashcards(
     # 1. Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -198,6 +202,7 @@ async def generate_flashcards(
         _generate_flashcards_background,
         flashcard_set_id=flashcard_set.id,
         session_id=session_id,
+        user_id=user_id,
         document_ids=request.document_ids,
         num_cards=request.num_cards,
         db_session_factory=SessionLocal,
@@ -212,13 +217,13 @@ async def generate_flashcards(
 async def list_flashcard_sets(
     session_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ) -> Any:
     """List all flashcard sets for a chat session."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -243,13 +248,13 @@ async def get_flashcard_set(
     session_id: int,
     set_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ) -> Any:
     """Get a specific flashcard set with all cards."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -276,13 +281,13 @@ async def delete_flashcard_set(
     session_id: int,
     set_id: int,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    user_id: int = Depends(deps.get_current_user_id),
 ):
     """Delete a flashcard set."""
     # Verify chat access
     result = await db.execute(
         select(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(ChatSession.id == session_id, ChatSession.user_id == user_id)
     )
     chat = result.scalars().first()
     if not chat:
@@ -299,3 +304,7 @@ async def delete_flashcard_set(
     
     await db.delete(flashcard_set)
     await db.commit()
+    
+    # Emit socket event to notify user
+    from app.socket import emit_studio_items_updated
+    await emit_studio_items_updated(user_id, session_id)
