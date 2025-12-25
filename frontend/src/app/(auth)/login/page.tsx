@@ -53,9 +53,9 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-gray-50 border-r dark:bg-gray-950/20 backdrop-blur-3xl z-10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20">
-            R
+            ER
           </div>
-          <span className="text-2xl font-bold tracking-tight text-foreground">RAG Student</span>
+          <span className="text-2xl font-bold tracking-tight text-foreground">EduRAG</span>
         </div>
 
         <div className="relative z-10">

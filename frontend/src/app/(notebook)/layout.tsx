@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Notebook | RAG Student",
+  title: "Notebook | EduRAG",
   description: "AI-powered notebook for students",
 };
 
