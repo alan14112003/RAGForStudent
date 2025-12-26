@@ -80,21 +80,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative p-6 rounded-3xl bg-white dark:bg-gray-900 border shadow-sm">
-          <div className="flex items-center gap-1 mb-3">
-            {[1, 2, 3, 4, 5].map((s) => <Sparkles key={s} size={16} className="text-yellow-400 fill-yellow-400" />)}
-          </div>
-          <p className="text-foreground/80 font-medium italic mb-4">
-            "This tool completely changed how I study. I can find any concept in my 500-page textbook in seconds."
-          </p>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-linear-to-br from-pink-500 to-orange-400" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Sarah J.</p>
-              <p className="text-xs text-muted-foreground">Medical Student</p>
-            </div>
-          </div>
-        </div>
+        <div className="relative p-6"></div>
 
         {/* Decorative Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
