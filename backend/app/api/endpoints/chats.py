@@ -243,15 +243,19 @@ async def upload_file(
     # So best to save to temp file, Upload to MinIO (for persistence), and Ingest (for RAG).
 
     try:
+        print(f"[DEBUG] Start processing file upload: {file.filename} for session {session_id}", flush=True)
         suffix = Path(file.filename).suffix
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             shutil.copyfileobj(file.file, tmp)
             tmp_path = Path(tmp.name)
+        print(f"[DEBUG] File saved to temp path: {tmp_path}", flush=True)
         
         # Upload to MinIO
         # Object name: chat_{id}/{filename}
         object_name = f"chat_{chat.id}/{file.filename}"
+        print(f"[DEBUG] Uploading to MinIO: {object_name}", flush=True)
         storage_service.upload_file(tmp_path, object_name=object_name, content_type=file.content_type)
+        print(f"[DEBUG] MinIO upload successful", flush=True)
         
         # 3. Add to DB Document
         doc = Document(
@@ -264,6 +268,7 @@ async def upload_file(
         await db.commit()
         await db.refresh(doc)
         doc_id = doc.id
+        print(f"[DEBUG] Document record created in DB with ID: {doc_id}", flush=True)
         
         # 4. Ingest RAG
         # We use tmp_path for ingestion
@@ -278,12 +283,14 @@ async def upload_file(
                 "session_id": session_id,
                 "file_name": file.filename
             }
+            print("[DEBUG] Starting RAG ingestion...", flush=True)
             summary = await rag_service.ingest_file(
                 user_id=user_id_str,
                 session_id=str(session_id),
                 file_path=tmp_path,
                 metadata=metadata
             )
+            print("[DEBUG] RAG ingestion completed successfully", flush=True)
             
             doc.status = DocumentStatus.INDEXED
             await db.commit()
@@ -293,6 +300,7 @@ async def upload_file(
         except Exception as e:
             import traceback
             traceback.print_exc()
+            print(f"[DEBUG] Ingestion failed: {e}", flush=True)
             # Avoid accessing doc attributes if expired
             # doc.status = DocumentStatus.FAILED
             # await db.commit()
@@ -314,6 +322,7 @@ async def upload_file(
     except Exception as e:
         import traceback
         traceback.print_exc()
+        print(f"[DEBUG] Upload failed: {e}", flush=True)
         # Also log to logger if available
 
 @router.get("/{session_id}/documents", response_model=List[Any]) # Use Any or create specific schema in list

@@ -120,14 +120,14 @@ export default function LoginPage() {
                   text="continue_with"
                 />
               </div>
-              <div className="w-full flex justify-center">
+              {/* <div className="w-full flex justify-center">
                 <button
                   onClick={handleDevLogin}
                   className="w-full max-w-[240px] px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded text-sm font-medium transition-colors"
                 >
                   Dev Login
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
 

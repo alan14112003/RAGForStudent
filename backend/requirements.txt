@@ -20,3 +20,5 @@ pypdf
 python-dotenv
 python-socketio[asyncio]
 sentence-transformers
+pymupdf
+

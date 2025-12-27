@@ -227,14 +227,15 @@ class RagService:
         # Tạo document_id duy nhất bằng UUIDv7
         document_id = self._generate_document_id()
 
-        logger.info("Starting ingestion: user=%s, session=%s, file=%s, document_id=%s", 
-                   user_id, session_id, file_path, document_id)
+        print(f"[DEBUG] Starting ingestion: user={user_id}, session={session_id}, file={file_path}, document_id={document_id}", flush=True)
         
         # Convert tài liệu
+        print("[DEBUG] Converting file to documents...", flush=True)
         converter = ConverterFactory.create("file")
         documents = converter.convert(str(file_path), metadata=metadata)
         if not documents:
             raise ValueError(f"No content extracted from {file_path}")
+        print(f"[DEBUG] File converted. Extracted {len(documents)} document parts.", flush=True)
 
         raw_metadata: Dict[str, Any] = dict(metadata or {})
         raw_metadata.setdefault("content_format", "markdown")
@@ -247,20 +248,23 @@ class RagService:
 
         # Ghép nội dung đầy đủ
         full_content = "\n\n".join([doc.page_content for doc in documents])
-        logger.debug("Extracted %d documents, total length: %d chars", 
-                    len(documents), len(full_content))
+        print(f"[DEBUG] Extracted {len(documents)} documents, total length: {len(full_content)} chars", flush=True)
 
         # Cắt thành chunks
+        print("[DEBUG] Splitting documents into chunks...", flush=True)
         chunks = self._text_splitter.split_documents(documents)
         if not chunks:
             raise ValueError(f"No chunks generated from {file_path}")
+        print(f"[DEBUG] Generated {len(chunks)} chunks.", flush=True)
 
         # Tính toán vị trí chunks
+        print("[DEBUG] Calculating chunk positions...", flush=True)
         chunk_positions = self._calculate_chunk_positions(full_content, chunks)
 
         # Chuẩn bị metadata và lưu chunks
         chunk_infos: List[ChunkInfo] = []
         
+        print("[DEBUG] Preparing chunk metadata...", flush=True)
         for idx, (chunk, (start_char, end_char)) in enumerate(zip(chunks, chunk_positions)):
             chunk_meta = {
                 "user_id": user_id,
@@ -290,10 +294,10 @@ class RagService:
             chunk_infos.append(chunk_info)
 
         # Lưu vào Qdrant
-        logger.info("Persisting %d chunks for document_id=%s to collection=%s", 
-                   len(chunks), document_id, storage.collection_name)
+        print(f"[DEBUG] Persisting {len(chunks)} chunks for document_id={document_id} to collection={storage.collection_name}", flush=True)
         storage.create_collection()
         await storage.add_documents(chunks)
+        print(f"[DEBUG] Chunks persisted to Qdrant successfully.", flush=True)
 
         # Tạo DocumentInfo
         document_info = DocumentInfo(
