@@ -21,9 +21,9 @@ export default function Header({ title, icon, children, onTitleChange }: HeaderP
         {/* Logo - Always click to go home */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold">
-            ER
+            DM
           </div>
-          <span className="text-xl font-semibold text-foreground tracking-tight hidden sm:block">EduRAG</span>
+          <span className="text-xl font-semibold text-foreground tracking-tight hidden sm:block">Documind</span>
         </Link>
 
         {/* Notebook Title / Breadcrumb replacement */}
